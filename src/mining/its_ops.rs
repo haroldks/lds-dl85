@@ -1,10 +1,6 @@
+use crate::mining::types_def::*;
+use crate::data::dt::Data;
 use bit_vec::BitVec;
-use super::data::Data;
-
-pub type Attribute = usize;
-pub type Item = (Attribute, bool);
-//pub type Itemset = Vec<Item>; // I can use a structure to have all data stored in it quickly like support, freq and so one when each function is called
-
 
 pub struct ItemsetOps<'a>{
 
@@ -17,7 +13,7 @@ pub struct ItemsetOps<'a>{
     updated: bool
 
 }
-
+#[allow(dead_code)]
 impl <'a> ItemsetOps <'a> {
 
     pub fn new(current: Vec<Item>, data: &Data, support: Option<usize>, frequency: Option<f32>, mask: Option<BitVec>, ntransactions:usize, updated:bool) -> ItemsetOps {
@@ -39,23 +35,23 @@ impl <'a> ItemsetOps <'a> {
     }
 
     fn update_mask(&mut self, item: &Item){
-          let mut  mask = self.mask.as_mut().unwrap();
-            let mut item_vec = self.data.data[item.0].clone();
-            if !item.1 {
-                item_vec.negate();
-            }
-            mask.and(&item_vec);
-            self.updated = false;
+        let  mask = self.mask.as_mut().unwrap();
+        let mut item_vec = self.data.data[item.0].clone();
+        if !item.1 {
+            item_vec.negate();
+        }
+        mask.and(&item_vec);
+        self.updated = false;
     }
 
     fn  compute_support_from_mask(&mut self) -> usize {
         if !self.mask.is_some(){
             self.mask = Option::from(BitVec::from_elem(self.ntransactions, true));
         }
-        for mut item in &self.current.clone(){
-           self.update_mask(&item);
+        for item in &self.current.clone(){
+            self.update_mask(&item);
         }
-        let mut mask = self.mask.as_mut().unwrap();
+        let mask = self.mask.as_mut().unwrap();
         self.support = Option::from(mask.iter().filter(|x| *x).count());
         self.frequency = Option::from(self.support.unwrap() as f32 / self.ntransactions as f32);
         self.updated = true;
@@ -80,13 +76,27 @@ impl <'a> ItemsetOps <'a> {
     }
 
 
-    pub fn freq(&mut self) -> f32 {
+    pub fn frequency(&mut self) -> f32 {
         if !self.updated{
             self.support();
         }
         self.frequency.unwrap()
     }
 
+    pub fn classes_cover(&mut self) -> Vec<usize> {
+        let mut classes_cover = vec![];
+        for i in 0..self.data.nclasses{
+            let class = &self.data.target[i];
+            let mut cloned_mask = self.mask.clone().unwrap();
+            cloned_mask.and(class);
+            classes_cover.push(cloned_mask.iter().filter(|x| *x).count());
+        }
+        classes_cover
+    }
+
+    pub fn top_class(&mut self){
+
+    }
+
+
 }
-
-
