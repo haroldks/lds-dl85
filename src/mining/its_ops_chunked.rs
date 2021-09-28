@@ -3,28 +3,42 @@ use bit_vec::BitVec;
 use crate::data::dt_chuncked::DataChuncked;
 use crate::mining::types_def::*;
 
+
 pub struct ItemsetOpsChunked<'a> {
     pub current: Vec<Item>,
     data: &'a DataChuncked,
     support: Option<usize>,
     frequency: Option<f32>,
     mask: Option<Vec<BitVec>>,
+    mask_stack : Vec<Option<Vec<BitVec>>>,
     ntransactions: usize,
     nchunks: usize,
     updated: bool,
+    valid_chunks: Vec<usize>,
+    limits: Vec<usize>
 }
 
 
 #[allow(dead_code)]
-impl<'a> ItemsetOpsChunked<'a> {
+impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
     pub fn new(current: Vec<Item>, data: &DataChuncked, support: Option<usize>, frequency: Option<f32>, mask: Option<Vec<BitVec>>, ntransactions: usize, updated: bool, nchunks: usize) -> ItemsetOpsChunked {
-        ItemsetOpsChunked { current, data, support, frequency, mask, ntransactions, updated, nchunks }
+        ItemsetOpsChunked { current, data, support, frequency, mask, mask_stack: vec![], ntransactions, updated, nchunks, valid_chunks: vec![], limits: vec![] }
     }
 
     pub fn union(&mut self, second_its: &Item) {
         self.current.push(*second_its);
         self.updated = false;
         self.update_mask(&second_its);
+        self.mask_stack.push(self.mask.clone());
+        self.support();
+    }
+
+
+
+
+    pub fn backtrack(&mut self) {
+        self.mask_stack.pop();
+        self.mask = self.mask_stack[self.mask_stack.len() - 1].clone();
         self.support();
     }
 
