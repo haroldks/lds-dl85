@@ -3,30 +3,30 @@ use crate::node::node::Node;
 use std::fmt;
 use std::fmt::Formatter;
 #[derive(Debug)]
-pub struct TrieEdge  {
-    pub item : Item,
-    pub sub_trie : TrieNode,
-    //data: &'a Node <'a>
+pub struct TrieEdges  {
+   pub edges : Vec<TrieNode>
 }
 
 
-impl TrieEdge {
-    pub fn new<'a>(item: Item) -> TrieEdge{
-        TrieEdge { item, sub_trie: TrieNode::new()}
+impl TrieEdges {
+    pub fn new<'a>() -> TrieEdges{
+        TrieEdges { edges: vec![], }
     }
-    pub fn get_sub_trie<'a>(&mut self) -> &mut Vec<TrieEdge> {
-        &mut self.sub_trie.edges
-    }
-    pub fn get_related_node<'a>(&mut self) -> &mut TrieNode {
-        &mut self.sub_trie
+
+    pub fn get_related_node<'a>(&mut self) -> &mut Vec<TrieNode> {
+        &mut self.edges
     }
 }
 
-impl fmt::Display for TrieEdge {
+impl fmt::Display for TrieEdges {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-       return write!(f,
-           "{{item: ({}, {}), associated_tree:{}   }}", self.item.0, self.item.1, self.sub_trie
-       )
+        writeln!(f, "{{  ");
+        for i in &self.edges{
+            write!(f, "\t{}", i);
+        }
+        write!(f, " }}");
+        Ok(())
+
     }
 }
 
@@ -34,26 +34,28 @@ impl fmt::Display for TrieEdge {
 
 #[derive(Debug)]
 pub struct TrieNode {
-    pub edges : Vec<TrieEdge>
+    pub item : Item,
+    pub data: Node,
+    pub sub_trie : TrieEdges,
+    pub is_new: bool
 }
 
 impl fmt::Display for TrieNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{{edges:");
-        for i in &self.edges{
-            write!(f, "\t{}", i);
-        }
-        write!(f, " }}");
-        Ok(())
+        write!(f, "{{ Item:  ({}, {}),  NodeData :  {},  Edges:  {}}}", self.item.0, self.item.1, self.data, self.sub_trie)
+
     }
 }
-
-impl TrieNode {
-    pub fn new() -> TrieNode {
-        TrieNode {edges : vec![]}
+//
+ impl TrieNode {
+    pub fn new(item: Item, ) -> TrieNode {
+        TrieNode { item, sub_trie: TrieEdges::new(), data: Node::new(item, 0), is_new: true }
     }
-
-}
+//     pub fn get_sub_trie<'a>(&mut self) -> &mut TrieEdges {
+//         &mut self.sub_trie
+//     }
+//
+ }
 
 
 pub struct Trie {
@@ -67,21 +69,20 @@ pub struct Trie {
 impl Trie {
 
     pub fn new() -> Trie {
-        Trie { root: TrieNode::new(), cachesize: 0}
+        Trie { root: TrieNode::new((usize::MAX, false)), cachesize: 0}
     }
 
     pub fn get(&mut self, key : &Vec<Item>) -> Option<&mut TrieNode> {
         let mut node = &mut self.root;
 
         for item in key.iter().enumerate() {
-            let mut edges= &mut node.edges;
-            let mut next  = edges.iter_mut().find(|x| (**x).item == *item.1);
+            let mut sub_trie= &mut node.sub_trie;
+            let mut next  = sub_trie.edges.iter_mut().find(|x| (**x).item == *item.1);
             if next.is_none(){
                 return None;
             }
             else {
-                let n_ref  = next.unwrap();
-                node =  &mut n_ref.sub_trie;
+                 node  = next.unwrap();
             }
         }
         Option::from(node)
@@ -93,21 +94,20 @@ impl Trie {
 
         for item in key.iter().enumerate() {
 
-            let mut edges= &mut node.edges;
-            let mut next = edges.iter().position(|x| x.item == *item.1);
-            if   next.is_none(){
+            let mut sub_trie= &mut node.sub_trie;
+            let mut next = sub_trie.edges.iter().position(|x| x.item == *item.1);
+            if  next.is_none(){
                 self.cachesize += 1;
-                let len = edges.len() + 1;
-                let mut new_edge = TrieEdge::new(*item.1);
-                edges.push(new_edge);
+                let len = sub_trie.edges.len() + 1;
+                let mut new_node = TrieNode::new(*item.1);
+                sub_trie.edges.push(new_node);
 
-                let m = &mut edges[len - 1];
-                node = &mut m.sub_trie;
+                node = &mut sub_trie.edges[len - 1];
 
             }
             else {
-                let mut edge_ref = &mut edges[next.unwrap()];
-                node = &mut edge_ref.sub_trie;
+                node = &mut sub_trie.edges[next.unwrap()];
+
             }
         }
         node
