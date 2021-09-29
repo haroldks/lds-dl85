@@ -6,11 +6,11 @@ use crate::mining::types_def::*;
 
 pub struct ItemsetOpsChunked<'a> {
     pub current: Vec<Item>,
-    data: &'a DataChuncked,
+    pub data: &'a DataChuncked,
     support: Option<usize>,
     frequency: Option<f32>,
     mask: Option<Vec<BitVec>>,
-    mask_stack : Vec<Option<Vec<BitVec>>>,
+    mask_stack : Vec<Vec<BitVec>>,
     ntransactions: usize,
     nchunks: usize,
     updated: bool,
@@ -21,33 +21,55 @@ pub struct ItemsetOpsChunked<'a> {
 
 #[allow(dead_code)]
 impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
-    pub fn new(current: Vec<Item>, data: &DataChuncked, support: Option<usize>, frequency: Option<f32>, mask: Option<Vec<BitVec>>, ntransactions: usize, updated: bool, nchunks: usize) -> ItemsetOpsChunked {
-        ItemsetOpsChunked { current, data, support, frequency, mask, mask_stack: vec![], ntransactions, updated, nchunks, valid_chunks: vec![], limits: vec![] }
+    pub fn new(data: &DataChuncked, support: Option<usize>, frequency: Option<f32>, ntransactions: usize, updated: bool, nchunks: usize) -> ItemsetOpsChunked {
+        let mut mask = Option::from(vec![BitVec::from_elem(64, true); nchunks]);
+        let dead_bits = 64 - match ntransactions % 64 {
+            0 => { 0 }
+            _ => { nchunks * 64 - ntransactions }
+        };
+        let last_chunk = &mut mask.as_mut().unwrap()[nchunks - 1];
+        for i in (dead_bits..64).rev() {
+            last_chunk.set(i, false);
+        }
+        let cloned_mask = mask.as_ref().unwrap().clone();
+
+        ItemsetOpsChunked { current: vec![], data, support, frequency, mask, mask_stack: vec![cloned_mask], ntransactions, updated, nchunks, valid_chunks: vec![], limits: vec![] }
     }
 
-    pub fn union(&mut self, second_its: &Item) {
-        self.current.push(*second_its);
-        self.updated = false;
-        self.update_mask(&second_its);
-        self.mask_stack.push(self.mask.clone());
-        self.support();
-    }
+
 
 
 
 
     pub fn backtrack(&mut self) {
         self.mask_stack.pop();
-        self.mask = self.mask_stack[self.mask_stack.len() - 1].clone();
+        self.current.pop();
+        self.mask = Option::from(self.mask_stack[self.mask_stack.len() - 1].clone());
+        self.updated = false;
+        self.support = None;
         self.support();
     }
 
     pub fn union_cover(&mut self, second_its: &Item) -> usize {
         self.current.push(*second_its);
         self.updated = false;
+        self.support = None;
         self.update_mask(&second_its);
+        self.mask_stack.push(self.mask.as_ref().unwrap().clone());
         self.support()
     }
+
+    pub fn temp_union(&mut self, second_its: &Item) -> usize{
+        self.current.push(*second_its);
+        self.updated = false;
+        self.support = None;
+        self.update_mask(&second_its);
+        self.mask_stack.push(self.mask.as_ref().unwrap().clone());
+        let support = self.support();
+        self.backtrack();
+        return support;
+    }
+
 
     fn update_mask(&mut self, item: &Item) {
         let mask = self.mask.as_mut().unwrap();
