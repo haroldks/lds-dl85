@@ -26,7 +26,7 @@ use crate::dl85::basic_dl85::DL85;
 // }
 
 
-fn main() {
+fn main() { // TODO: Unit tests
 
 
 
@@ -82,6 +82,8 @@ fn main() {
 
     let mut cache = Trie::new();
     let mut its: Vec<Item> = vec![(2, false), (1, true), (0, true)];
+    let a = cache.get(&its);
+    println!("{:?}", a.is_none());
     its.sort();
     println!("{:?}", its);
     let lol = cache.insert(&its);

@@ -4,10 +4,11 @@ use std::fmt::Formatter;
 
 #[derive(Debug)]
 pub struct Node {
-    pub current_depth: u64,
+    pub current_depth: u64, // FIXME: Useless I think
     pub test: Item,
     pub leaf_error : f64,
     pub node_error : f64,
+    pub lower_bound : f64,
     // left: NodeData,
     // right: NodeData,
 
@@ -21,7 +22,8 @@ impl Node {
             current_depth,
             test,
             leaf_error: <f64>::MAX,
-            node_error: <f64>::MAX
+            node_error: <f64>::MAX,
+            lower_bound: 0f64
         }
     }
 
