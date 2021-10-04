@@ -171,4 +171,11 @@ impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
                 );
         (max_idx, max_val)
     }
+
+    pub fn leaf_misclassication_error(&mut self) ->(usize, usize){
+        let classes_cover = self.classes_cover();
+        let max_class = self.top_class();
+        let error =  classes_cover.iter().sum::<usize>() - max_class.1;
+        return (error, max_class.0)
+    }
 }

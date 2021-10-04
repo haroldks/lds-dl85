@@ -42,14 +42,14 @@ pub struct TrieNode {
 
 impl fmt::Display for TrieNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{{ Item:  ({}, {}),  NodeData :  {},  Edges:  {}}}", self.item.0, self.item.1, self.data, self.sub_trie)
+        write!(f, "{{ Item:  ({}, {}),  is_new:  {}  NodeData :  {},  Edges:  {}}}", self.item.0, self.item.1, self.is_new, self.data, self.sub_trie)
 
     }
 }
 //
  impl TrieNode {
     pub fn new(item: Item, ) -> TrieNode {
-        TrieNode { item, sub_trie: TrieEdges::new(), data: Node::new(item, 0), is_new: true }
+        TrieNode { item, sub_trie: TrieEdges::new(), data: Node::new(item.0, 0), is_new: true }
     }
 //     pub fn get_sub_trie<'a>(&mut self) -> &mut TrieEdges {
 //         &mut self.sub_trie
@@ -113,8 +113,13 @@ impl Trie {
         node
     }
 
-    pub fn update(itemset : &Vec<Item>){
-        unimplemented!()
+    pub fn update(&mut self, itemset : &Vec<Item>, node_data: Node) -> bool{
+        let node = self.get(itemset);
+        let node_ref = node.unwrap();
+        node_ref.is_new = false;
+        node_ref.data = node_data;
+        return true;
+
     }
 
 }
