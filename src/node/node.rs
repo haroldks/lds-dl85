@@ -10,6 +10,7 @@ pub struct Node {
     pub leaf_error : f64,
     pub node_error : f64,
     pub lower_bound : f64,
+    pub max_class : usize,
     pub is_leaf: bool
     // left: NodeData,
     // right: NodeData,
@@ -27,6 +28,7 @@ impl Node {
             leaf_error: <f64>::MAX,
             node_error: <f64>::MAX,
             lower_bound: 0f64,
+            max_class: <usize>::MAX,
             is_leaf: false
         }
     }
@@ -35,6 +37,6 @@ impl Node {
 
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        writeln!(f, "[current_depth : {}, is_leaf  :  {}, test:  {},  leaf_error:  {},  node_error:  {}]", self.current_depth, self.is_leaf, self.test, self.leaf_error, self.node_error)
+        writeln!(f, "[current_depth : {}, is_leaf  :  {}, test:  {},  leaf_error:  {},  node_error:  {}, max class : {}]", self.current_depth, self.is_leaf, self.test, self.leaf_error, self.node_error, self.max_class)
     }
 }

@@ -51,17 +51,14 @@ impl fmt::Display for TrieNode {
     pub fn new(item: Item, ) -> TrieNode {
         TrieNode { item, sub_trie: TrieEdges::new(), data: Node::new(item.0, 0), is_new: true }
     }
-//     pub fn get_sub_trie<'a>(&mut self) -> &mut TrieEdges {
-//         &mut self.sub_trie
-//     }
-//
  }
 
 
 pub struct Trie {
 
     pub root : TrieNode,
-    pub cachesize: u64
+    pub cachesize: u64,
+    pub is_done: bool
 
 }
 
@@ -69,7 +66,7 @@ pub struct Trie {
 impl Trie {
 
     pub fn new() -> Trie {
-        Trie { root: TrieNode::new((usize::MAX, false)), cachesize: 0}
+        Trie { root: TrieNode::new((usize::MAX, false)), cachesize: 0, is_done: false }
     }
 
     pub fn get(&mut self, key : &Vec<Item>) -> Option<&mut TrieNode> {
@@ -121,5 +118,13 @@ impl Trie {
         return true;
 
     }
+
+    pub fn gen_final_tree(&mut self){
+        if !self.is_done{
+            println!("The Cache is not fully loaded. This method should be called at the end of the search");
+        }
+    }
+
+
 
 }

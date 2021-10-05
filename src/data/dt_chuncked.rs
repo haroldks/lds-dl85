@@ -70,8 +70,6 @@ impl DataChuncked {
 
             Ok(DataChuncked { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv, chunked: true })
 
-
-
     }
 
 

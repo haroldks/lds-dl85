@@ -95,11 +95,6 @@ impl DataLong {
         }
 
 
-        // for (idx, class) in target.iter().enumerate() {
-        //     targets_bv[*class][idx/64][idx%64] =  1;
-        //
-        // }
-
         Ok(DataLong { filename, ntransactions, nattributes, nclasses, data: final_inputs, target: final_targets, chunked: true })
 
 

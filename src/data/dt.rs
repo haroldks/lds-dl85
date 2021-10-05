@@ -27,54 +27,6 @@ impl Data {
         Data::data_as_it(data_lines, filename)
     }
 
-
-    // fn data_chuncked(&self, data:Vec<String>, filename:String){
-    //     let data: Vec<String> = buffered.lines().map(|x| x.unwrap()).collect();
-    //     let nattributes = data[0].split_ascii_whitespace().collect::<Vec<&str>>().len() - 1;
-    //     let ntransactions = data.len();
-    //
-    //     let mut nchunks;
-    //     let mut inputs = vec![];
-    //     if ntransactions > 64{
-    //         let nchunks = match ntransactions%64 {
-    //             0 => {ntransactions/64}
-    //             _ => {(ntransactions/64) + 1} };
-    //         inputs = vec![vec![BitVec::from_elem(64, false); nchunks]; nattributes];
-    //         let mut target = vec![];
-    //
-    //         for (i, line) in data.iter().enumerate() {
-    //             let line = line.split_ascii_whitespace().collect::<Vec<&str>>();
-    //             for (j, l) in line.iter().enumerate() {
-    //                 match j {
-    //                     0 => { target.push(l.parse::<usize>().unwrap()) }
-    //                     _ => {
-    //                             inputs[(j - 1)][i/64].set(i%64, l == &"1")
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //
-    //         let nclasses = target.iter().collect::<HashSet<_>>().len();
-    //
-    //         let mut targets_bv = vec![];
-    //
-    //         for _ in 0..nclasses {
-    //             targets_bv.push(vec![BitVec::from_elem(64, false); nchunks])
-    //         }
-    //
-    //         for (idx, class) in target.iter().enumerate() {
-    //             targets_bv[*class][idx/64].set(idx%64, true);
-    //
-    //         }
-    //
-    //         Ok(Data { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv })
-    //     }
-    //     else {
-    //         Data::data_as_it(data, filename)
-    //     }
-    //
-    // }
-
     fn data_as_it(data:Vec<String>, filename: String) -> Result<Data, Error> {
         let nattributes = data[0].split_ascii_whitespace().collect::<Vec<&str>>().len() - 1;
         let ntransactions = data.len();
