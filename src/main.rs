@@ -1,15 +1,9 @@
-
-
 use mining::types_def::*;
 
 use crate::cache::trie::*;
-
 use crate::data::dt_chuncked::*;
-
 use crate::dl85::basic_dl85::DL85;
-
 use crate::mining::its_ops_chunked::ItemsetOpsChunked;
-
 use crate::tree::Tree;
 
 mod mining;
@@ -50,7 +44,6 @@ fn get_solution_tree(cache: Trie) -> (Tree, Trie) {
 }
 
 fn get_sub_tree(parent: Vec<Item>, mut cache: Trie) -> (Trie, Tree) {
-
     let parent_node = cache.get(&parent).unwrap();
     let len = parent.len();
 

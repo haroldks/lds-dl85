@@ -1,11 +1,11 @@
-
 use crate::cache::trie::{Trie, TrieNode};
-
 use crate::mining::its_ops_chunked::ItemsetOpsChunked;
 use crate::mining::types_def::{Attribute, Item};
 use crate::node::node::Node;
 
-pub struct DL85<'a> { // TODO: Allow it to use generic types for differents ITS and DATA. Also solve the problem of the cache and its by removing them from the attributes'
+#[allow(dead_code)]
+pub struct DL85<'a> {
+    // TODO: Allow it to use generic types for differents ITS and DATA. Also solve the problem of the cache and its by removing them from the attributes'
     ntransactions: usize,
     nclasses: usize,
     nattributes: usize,
@@ -18,6 +18,7 @@ pub struct DL85<'a> { // TODO: Allow it to use generic types for differents ITS 
 
 }
 
+#[allow(dead_code)]
 impl<'a> DL85<'a> {
     pub fn new(min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, cache: Trie, its_op: ItemsetOpsChunked) -> DL85 {
         DL85 {
@@ -35,34 +36,23 @@ impl<'a> DL85<'a> {
     }
 
 
-
-
     fn recursion(mut cache: Trie, mut its_op: ItemsetOpsChunked<'a>, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, min_support: u64, max_error: f64, mut parent_node_data: Node) -> (Trie, ItemsetOpsChunked<'a>, Node) {
-
-
-        let mut best = parent_node_data.test;
-       // let mut cached_node = cache.get(&current_itemset);
         let mut child_upper_bound = upper_bound;
         let _min_lb = <f64>::MAX;
 
-
-
-
         let current_support = its_op.support() as u64;
 
-        let data = DL85::check_if_stop_condition_reached (parent_node_data, upper_bound, min_support, current_support, depth, max_depth);
+        let data = DL85::check_if_stop_condition_reached(parent_node_data, upper_bound, min_support, current_support, depth, max_depth);
 
-        if data.0{
+        if data.0 {
             cache.update(&current_itemset, data.1);
             return (cache, its_op, data.1);
         }
 
 
-
         let new_candidates = DL85::get_next_sucessors(&next_candidates, last_attribute, &mut its_op, min_support);
 
         if new_candidates.is_empty() {
-
             parent_node_data.node_error = parent_node_data.leaf_error;
             parent_node_data.is_new = false;
             cache.update(&current_itemset, parent_node_data);
@@ -70,8 +60,6 @@ impl<'a> DL85<'a> {
         }
 
         for attribute in &new_candidates {
-
-
             let items: Vec<Item> = vec![(*attribute, false), (*attribute, true)];
             let _first_item_sup = its_op.union_cover(&items[0]); // Here current is supposed to be updated
 
@@ -84,7 +72,6 @@ impl<'a> DL85<'a> {
             let mut first_node_data = DL85::retrieve_cache_emplacement_for_current_its(&mut cache, &items[0], depth, &mut its_op); // Error computation // cache_ref, item_ref, depth
 
 
-
             let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), child_upper_bound, depth + 1, max_depth, min_support, max_error, first_node_data);
 
             cache = data.0;
@@ -95,14 +82,12 @@ impl<'a> DL85<'a> {
             let first_split_error = first_node_data.node_error;
             its_op.backtrack();
 
-            if first_node_data.node_error < upper_bound{
-
+            if first_node_data.node_error < upper_bound {
                 let _second_item_sup = its_op.union_cover(&items[1]);
 
                 let mut child_item_set = current_itemset.clone();
                 child_item_set.push(items[1]);
                 let mut second_node_data = DL85::retrieve_cache_emplacement_for_current_its(&mut cache, &items[1], depth, &mut its_op); // Error computation // cache_ref, item_ref, depth
-
 
 
                 let remaining_ub = child_upper_bound - first_split_error;
@@ -121,30 +106,20 @@ impl<'a> DL85<'a> {
                 let feature_error = first_split_error + second_split_error;
 
                 if feature_error < child_upper_bound {
-
                     parent_node_data.node_error = feature_error;
                     parent_node_data.test = *attribute;
-                    best = *attribute;
                     child_upper_bound = feature_error;
 
                     cache.update(&current_itemset, parent_node_data);
-
                 }
-
-            }
-            else {
-
+            } else {
                 continue;
-                }
-
-
             }
+        }
 
         cache.is_done = true;
         (cache, its_op, parent_node_data)
-        }
-
-
+    }
 
 
     pub fn run(&mut self) -> (Trie, ItemsetOpsChunked<'a>, Node) {
@@ -160,12 +135,11 @@ impl<'a> DL85<'a> {
         }
 
 
-
-        let cache  = Trie::new();
+        let cache = Trie::new();
         let its_ops = ItemsetOpsChunked::new(self.its_op.data, Option::from(self.min_support as usize), None, self.ntransactions, false, self.its_op.data.data[0].len());
 
         let empty_itemset: Vec<Item> = vec![];
-        
+
         DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, self.max_error, 0, self.max_depth, self.min_support, self.max_error, Node::new(<usize>::MAX, 0))
     }
 
@@ -173,20 +147,17 @@ impl<'a> DL85<'a> {
 
 
 
-        if depth == max_depth || current_support < (2 * min_support)  as u64 {
-
+        if depth == max_depth || current_support < (2 * min_support) as u64 {
             node.node_error = node.leaf_error;
             node.is_leaf = true;
             node.is_new = false;
             return (true, node);
         }
-        if upper_bond <= node.lower_bound{
-
+        if upper_bond <= node.lower_bound {
             return (true, node);
         }
 
         if node.leaf_error == 0. {
-
             node.node_error = node.leaf_error;
             node.is_leaf = true;
             node.is_new = false;
@@ -194,18 +165,16 @@ impl<'a> DL85<'a> {
         }
 
         (false, node)
-
     }
 
 
-    pub fn retrieve_cache_emplacement_for_current_its(cache_ref: &'a mut Trie, item : &Item, depth: u64, its_op: &mut ItemsetOpsChunked) -> Node { //TODO:  Here we do the creation of the new cache emplacement and compute the error
+    pub fn retrieve_cache_emplacement_for_current_its(cache_ref: &'a mut Trie, item: &Item, depth: u64, its_op: &mut ItemsetOpsChunked) -> Node { //TODO:  Here we do the creation of the new cache emplacement and compute the error
         let mut its = its_op.current.clone();
         its.sort_unstable();
-        let mut node  = cache_ref.insert(&its);
+        let mut node = cache_ref.insert(&its);
 
 
-
-        if node.is_new{
+        if node.is_new {
             let error = its_op.leaf_misclassication_error();
             node.data = Node::new(item.0, depth);
             node.data.leaf_error = error.0 as f64;
@@ -213,16 +182,11 @@ impl<'a> DL85<'a> {
             node.is_new = false;
         }
         node.data
-
-
-
     }
 
     fn get_cached_node(cache: &'a mut Trie, itemset: &Vec<Item>) -> Option<&'a mut TrieNode> {
-        
         cache.get(itemset)
     }
-
 
 
     fn get_next_sucessors(candidates: &Vec<Attribute>, last_attribute: Attribute, its_op: &mut ItemsetOpsChunked<'a>, min_support: u64) -> Vec<Attribute> {
@@ -230,8 +194,8 @@ impl<'a> DL85<'a> {
         let current_support = its_op.support();
 
         for candidate in candidates {
-            if *candidate == last_attribute{
-                continue
+            if *candidate == last_attribute {
+                continue;
             }
             let left_sup = its_op.temp_union(&(*candidate, false));
             let right_sup = current_support - left_sup;
@@ -246,7 +210,6 @@ impl<'a> DL85<'a> {
     fn get_candidates_support(&mut self, candidates: &Vec<usize>) -> Vec<(usize, usize)> {
         let mut all_supports = vec![];
         for candidate in candidates {
-
             let items = vec![(*candidate, true), (*candidate, false)];
             let mut c_supports = vec![];
             for it in items {

@@ -3,24 +3,21 @@ use bit_vec::BitVec;
 use crate::data::dt_chuncked::DataChuncked;
 use crate::mining::types_def::*;
 
-
-pub struct ItemsetOpsChunked<'a> {
+pub struct ItemsetOpsChunked<'a> { // TODO: Optimization for valids words using valids chuncks and limits variables
     pub current: Vec<Item>,
     pub data: &'a DataChuncked,
     support: Option<usize>,
     frequency: Option<f32>,
     mask: Option<Vec<BitVec>>,
-    mask_stack : Vec<Vec<BitVec>>,
+    mask_stack: Vec<Vec<BitVec>>,
     ntransactions: usize,
     nchunks: usize,
-    updated: bool,
-    valid_chunks: Vec<usize>,
-    limits: Vec<usize>
+    updated: bool
 }
 
-
 #[allow(dead_code)]
-impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
+impl<'a> ItemsetOpsChunked<'a> {
+    // TODO : Implementation of valid words
     pub fn new(data: &DataChuncked, support: Option<usize>, frequency: Option<f32>, ntransactions: usize, updated: bool, nchunks: usize) -> ItemsetOpsChunked {
         let mut mask = Option::from(vec![BitVec::from_elem(64, true); nchunks]);
         let dead_bits = 64 - match ntransactions % 64 {
@@ -33,12 +30,8 @@ impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
         }
         let cloned_mask = mask.as_ref().unwrap().clone();
 
-        ItemsetOpsChunked { current: vec![], data, support, frequency, mask, mask_stack: vec![cloned_mask], ntransactions, updated, nchunks, valid_chunks: vec![], limits: vec![] }
+        ItemsetOpsChunked { current: vec![], data, support, frequency, mask, mask_stack: vec![cloned_mask], ntransactions, updated, nchunks}
     }
-
-
-
-
 
 
     pub fn backtrack(&mut self) {
@@ -59,7 +52,7 @@ impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
         self.support()
     }
 
-    pub fn temp_union(&mut self, second_its: &Item) -> usize{
+    pub fn temp_union(&mut self, second_its: &Item) -> usize {
         self.current.push(*second_its);
         self.updated = false;
         self.support = None;
@@ -172,10 +165,10 @@ impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
         (max_idx, max_val)
     }
 
-    pub fn leaf_misclassication_error(&mut self) ->(usize, usize){
+    pub fn leaf_misclassication_error(&mut self) -> (usize, usize) {
         let classes_cover = self.classes_cover();
         let max_class = self.top_class();
-        let error =  classes_cover.iter().sum::<usize>() - max_class.1;
+        let error = classes_cover.iter().sum::<usize>() - max_class.1;
         (error, max_class.0)
     }
 }

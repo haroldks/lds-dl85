@@ -10,11 +10,10 @@ pub struct Data {
     pub nattributes: usize,
     pub nclasses: usize,
     pub data: Vec<BitVec>,
-    pub target: Vec<BitVec>,
-    chunked: bool // Update to use chunks
+    pub target: Vec<BitVec>
 }
 
-
+#[allow(dead_code)]
 impl Data {
     // TODO: add comments for readability
     pub fn new(filename: String) -> Result<Data, Error> {
@@ -27,7 +26,7 @@ impl Data {
         Data::data_as_it(data_lines, filename)
     }
 
-    fn data_as_it(data:Vec<String>, filename: String) -> Result<Data, Error> {
+    fn data_as_it(data: Vec<String>, filename: String) -> Result<Data, Error> {
         let nattributes = data[0].split_ascii_whitespace().collect::<Vec<&str>>().len() - 1;
         let ntransactions = data.len();
         // let lines: Vec<String> = buffered.lines().map(|x| x.unwrap()).collect();
@@ -56,8 +55,6 @@ impl Data {
             targets_bv[*class].set(idx, true)
         }
 
-        Ok(Data { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv, chunked: false })
-
+        Ok(Data { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv})
     }
-
 }

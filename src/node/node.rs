@@ -1,25 +1,25 @@
-use crate::mining::types_def::{Attribute};
 use std::fmt;
 use std::fmt::Formatter;
 
+use crate::mining::types_def::Attribute;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Node {
-    pub is_new : bool,
-    pub current_depth: u64, // FIXME: Useless I think
+    pub is_new: bool,
+    pub current_depth: u64,
+    // FIXME: Useless I think
     pub test: Attribute,
-    pub leaf_error : f64,
-    pub node_error : f64,
-    pub lower_bound : f64,
-    pub max_class : usize,
-    pub is_leaf: bool
+    pub leaf_error: f64,
+    pub node_error: f64,
+    pub lower_bound: f64,
+    pub max_class: usize,
+    pub is_leaf: bool,
     // left: NodeData,
     // right: NodeData,
-
 }
 
 
 impl Node {
-
     pub fn new(test: Attribute, current_depth: u64) -> Node {
         Node {
             is_new: true,
@@ -29,10 +29,9 @@ impl Node {
             node_error: <f64>::MAX,
             lower_bound: 0f64,
             max_class: <usize>::MAX,
-            is_leaf: false
+            is_leaf: false,
         }
     }
-
 }
 
 impl fmt::Display for Node {

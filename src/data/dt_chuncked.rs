@@ -11,7 +11,6 @@ pub struct DataChuncked {
     pub nclasses: usize,
     pub data: Vec<Vec<BitVec>>,
     pub target: Vec<Vec<BitVec>>,
-    chunked: bool // Update to use chunks
 }
 
 
@@ -28,50 +27,44 @@ impl DataChuncked {
     }
 
 
-    fn data_chuncked(data:Vec<String>, filename:String) -> Result<DataChuncked, Error> {
+    fn data_chuncked(data: Vec<String>, filename: String) -> Result<DataChuncked, Error> {
         let nattributes = data[0].split_ascii_whitespace().collect::<Vec<&str>>().len() - 1;
         let ntransactions = data.len();
 
         let mut nchunks = 1;
-        let mut inputs = vec![];
         if ntransactions > 64 {
             nchunks = match ntransactions % 64 {
                 0 => { ntransactions / 64 }
                 _ => { (ntransactions / 64) + 1 }
             };
         }
-            inputs = vec![vec![BitVec::from_elem(64, false); nchunks]; nattributes];
-            let mut target = vec![];
+        let mut inputs = vec![vec![BitVec::from_elem(64, false); nchunks]; nattributes];
+        let mut target = vec![];
 
-            for (i, line) in data.iter().enumerate() {
-                let line = line.split_ascii_whitespace().collect::<Vec<&str>>();
-                for (j, l) in line.iter().enumerate() {
-                    match j {
-                        0 => { target.push(l.parse::<usize>().unwrap()) }
-                        _ => {
-                            inputs[(j - 1)][i/64].set(i%64, l == &"1")
-                        }
+        for (i, line) in data.iter().enumerate() {
+            let line = line.split_ascii_whitespace().collect::<Vec<&str>>();
+            for (j, l) in line.iter().enumerate() {
+                match j {
+                    0 => { target.push(l.parse::<usize>().unwrap()) }
+                    _ => {
+                        inputs[(j - 1)][i / 64].set(i % 64, l == &"1")
                     }
                 }
             }
+        }
 
-            let nclasses = target.iter().collect::<HashSet<_>>().len();
+        let nclasses = target.iter().collect::<HashSet<_>>().len();
 
-            let mut targets_bv = vec![];
+        let mut targets_bv = vec![];
 
-            for _ in 0..nclasses {
-                targets_bv.push(vec![BitVec::from_elem(64, false); nchunks])
-            }
+        for _ in 0..nclasses {
+            targets_bv.push(vec![BitVec::from_elem(64, false); nchunks])
+        }
 
-            for (idx, class) in target.iter().enumerate() {
-                targets_bv[*class][idx/64].set(idx%64, true);
+        for (idx, class) in target.iter().enumerate() {
+            targets_bv[*class][idx / 64].set(idx % 64, true);
+        }
 
-            }
-
-            Ok(DataChuncked { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv, chunked: true })
-
+        Ok(DataChuncked { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv })
     }
-
-
-
 }
