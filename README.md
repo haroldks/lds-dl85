@@ -6,6 +6,7 @@
 - [x] Runnable Implementation
 - [ ] Move tree generation methods from the main file
 - [ ] Test all implementations to see the fastest (Chunked, Not chunked)
+- [ ] Check Memory usage with C++ implementation
 - [ ] Merge tree node when fake leaves is created ?
 - [ ] Fix warnings
 - [ ] Replace Vec to slices for the ItsOps implementations ?
@@ -17,3 +18,10 @@
 - [ ] Implement error reading at fixed time
 - [ ] Implement warm start
 - [ ] Create a main file to use from command line
+- [ ] Visualization of the Tree
+
+### Topics
+
+- [ ] Using DL85 With missing data
+- [ ] Sliding Windows
+- [ ] Knowledge distillation
