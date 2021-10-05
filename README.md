@@ -5,6 +5,9 @@
 
 - [x] Runnable Implementation
 - [ ] Move tree generation methods from the main file
+- [ ] Test all implementations to see the fastest (Chunked, Not chunked)
+- [ ] Merge tree node when fake leaves is created ?
+- [ ] Fix warnings
 - [ ] Replace Vec to slices for the ItsOps implementations ?
 - [ ] Implement lower bound to reduce the space search
 - [ ] Implement early stop with timeout
