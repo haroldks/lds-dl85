@@ -1,4 +1,4 @@
-use crate::mining::types_def::{Attribute, Item};
+use crate::mining::types_def::{Attribute};
 use std::fmt;
 use std::fmt::Formatter;
 

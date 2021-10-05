@@ -23,14 +23,14 @@ impl <'a> ItemsetOps <'a> {
     pub fn union(&mut self, second_its: &Item){
         self.current.push(*second_its);
         self.updated = false;
-        self.update_mask(&second_its);
+        self.update_mask(second_its);
         self.support();
     }
 
     pub fn union_cover(&mut self, second_its: &Item) -> usize {
         self.current.push(*second_its);
         self.updated = false;
-        self.update_mask(&second_its);
+        self.update_mask(second_its);
         self.support()
     }
 
@@ -45,11 +45,11 @@ impl <'a> ItemsetOps <'a> {
     }
 
     fn  compute_support_from_mask(&mut self) -> usize {
-        if !self.mask.is_some(){
+        if self.mask.is_none(){
             self.mask = Option::from(BitVec::from_elem(self.ntransactions, true));
         }
         for item in &self.current.clone(){
-            self.update_mask(&item);
+            self.update_mask(item);
         }
         let mask = self.mask.as_mut().unwrap();
         self.support = Option::from(mask.iter().filter(|x| *x).count());

@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error};
 
-use bit_vec::BitVec;
+
 use substring::Substring;
 
 pub struct DataLong {
@@ -45,13 +45,13 @@ impl DataLong {
         inputs = vec!["".to_string(); nattributes];
         let mut target = vec![];
 
-        for (i, line) in data.iter().enumerate() {
+        for (_i, line) in data.iter().enumerate() {
             let line = line.split_ascii_whitespace().collect::<Vec<&str>>();
             for (j, l) in line.iter().enumerate() {
                 match j {
                     0 => { target.push(l.parse::<usize>().unwrap()) }
                     _ => {
-                        inputs[(j - 1)].extend(l.chars());
+                        inputs[(j - 1)].push_str(l);
                     }
                 }
             }
@@ -64,7 +64,7 @@ impl DataLong {
 
             for i in (0..ntransactions).rev().step_by(64){
                 let j = (i).saturating_sub(63);
-                let mut a =  attrib_str.substring(j, i+1);
+                let a =  attrib_str.substring(j, i+1);
                 final_inputs[att].push(<u64>:: from_str_radix(&*a.chars().rev().collect::<String>(), 2).unwrap())
 
             }
@@ -86,7 +86,7 @@ impl DataLong {
                 let class_str  =  &mut targets_bv[c].as_str();
                 for i in (0..ntransactions).rev().step_by(64){
                     let j = (i).saturating_sub(63);
-                    let mut a =  class_str.substring(j, i+1);
+                    let a =  class_str.substring(j, i+1);
                     final_targets[c].push(<u64>:: from_str_radix(&*a.chars().rev().collect::<String>(), 2).unwrap())
 
                 }

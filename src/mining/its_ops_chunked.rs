@@ -54,7 +54,7 @@ impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
         self.current.push(*second_its);
         self.updated = false;
         self.support = None;
-        self.update_mask(&second_its);
+        self.update_mask(second_its);
         self.mask_stack.push(self.mask.as_ref().unwrap().clone());
         self.support()
     }
@@ -63,11 +63,11 @@ impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
         self.current.push(*second_its);
         self.updated = false;
         self.support = None;
-        self.update_mask(&second_its);
+        self.update_mask(second_its);
         self.mask_stack.push(self.mask.as_ref().unwrap().clone());
         let support = self.support();
         self.backtrack();
-        return support;
+        support
     }
 
 
@@ -76,8 +76,8 @@ impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
         let mut item_vec = self.data.data[item.0].clone();
 
         for i in 0..self.nchunks {
-            let mut a = &mut mask[i];
-            let mut b = &mut item_vec[i];
+            let a = &mut mask[i];
+            let b = &mut item_vec[i];
             if !item.1 {
                 b.negate();
                 a.and(b);
@@ -102,15 +102,15 @@ impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
     }
 
     fn compute_support_from_mask(&mut self) -> usize {
-        if !self.mask.is_some() {
+        if self.mask.is_none() {
             self.gen_new_mask();
         }
 
         for item in &self.current.clone() {
-            self.update_mask(&item);
+            self.update_mask(item);
         }
         let mask = self.mask.as_mut().unwrap();
-        self.support = Option::from(ItemsetOpsChunked::count_in_vec(&mask));
+        self.support = Option::from(ItemsetOpsChunked::count_in_vec(mask));
         self.frequency = Option::from(self.support.unwrap() as f32 / self.ntransactions as f32);
         self.updated = true;
         self.support.unwrap()
@@ -122,7 +122,7 @@ impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
             self.support.unwrap()
         } else if self.mask.is_some() && self.updated {
             let mask = self.mask.as_ref().unwrap();
-            self.support = Option::from(ItemsetOpsChunked::count_in_vec(&mask));
+            self.support = Option::from(ItemsetOpsChunked::count_in_vec(mask));
             self.frequency = Option::from(self.support.unwrap() as f32 / self.ntransactions as f32);
             self.updated = true;
             self.support.unwrap()
@@ -176,6 +176,6 @@ impl<'a> ItemsetOpsChunked<'a> { // TODO : Implementation of valid words
         let classes_cover = self.classes_cover();
         let max_class = self.top_class();
         let error =  classes_cover.iter().sum::<usize>() - max_class.1;
-        return (error, max_class.0)
+        (error, max_class.0)
     }
 }

@@ -73,8 +73,8 @@ impl Trie {
         let mut node = &mut self.root;
 
         for item in key.iter().enumerate() {
-            let mut sub_trie= &mut node.sub_trie;
-            let mut next  = sub_trie.edges.iter_mut().find(|x| (**x).item == *item.1);
+            let sub_trie= &mut node.sub_trie;
+            let next  = sub_trie.edges.iter_mut().find(|x| (**x).item == *item.1);
             if next.is_none(){
                 return None;
             }
@@ -91,12 +91,12 @@ impl Trie {
 
         for item in key.iter().enumerate() {
 
-            let mut sub_trie= &mut node.sub_trie;
-            let mut next = sub_trie.edges.iter().position(|x| x.item == *item.1);
+            let sub_trie= &mut node.sub_trie;
+            let next = sub_trie.edges.iter().position(|x| x.item == *item.1);
             if  next.is_none(){
                 self.cachesize += 1;
                 let len = sub_trie.edges.len() + 1;
-                let mut new_node = TrieNode::new(*item.1);
+                let new_node = TrieNode::new(*item.1);
                 sub_trie.edges.push(new_node);
 
                 node = &mut sub_trie.edges[len - 1];
@@ -115,7 +115,7 @@ impl Trie {
         let node_ref = node.unwrap();
         node_ref.is_new = false;
         node_ref.data = node_data;
-        return true;
+        true
 
     }
 
