@@ -6,6 +6,8 @@ use crate::node::node::Node;
 #[allow(dead_code)]
 pub struct DL85<'a> {
     // TODO: Allow it to use generic types for differents ITS and DATA. Also solve the problem of the cache and its by removing them from the attributes'
+    // TODO: Add time limits options.
+
     ntransactions: usize,
     nclasses: usize,
     nattributes: usize,

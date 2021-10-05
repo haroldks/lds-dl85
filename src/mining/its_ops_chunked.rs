@@ -3,7 +3,9 @@ use bit_vec::BitVec;
 use crate::data::dt_chuncked::DataChuncked;
 use crate::mining::types_def::*;
 
-pub struct ItemsetOpsChunked<'a> { // TODO: Optimization for valids words using valids chuncks and limits variables
+pub struct ItemsetOpsChunked<'a> {
+    // TODO: Optimization for valids words using valids chuncks and limits variables
+    // TODO: Look for options to changes the Vec to &[]. It can be faster
     pub current: Vec<Item>,
     pub data: &'a DataChuncked,
     support: Option<usize>,
