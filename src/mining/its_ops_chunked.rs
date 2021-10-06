@@ -14,7 +14,7 @@ pub struct ItemsetOpsChunked<'a> {
     mask_stack: Vec<Vec<BitVec>>,
     ntransactions: usize,
     nchunks: usize,
-    updated: bool
+    updated: bool,
 }
 
 #[allow(dead_code)]
@@ -32,7 +32,7 @@ impl<'a> ItemsetOpsChunked<'a> {
         }
         let cloned_mask = mask.as_ref().unwrap().clone();
 
-        ItemsetOpsChunked { current: vec![], data, support, frequency, mask, mask_stack: vec![cloned_mask], ntransactions, updated, nchunks}
+        ItemsetOpsChunked { current: vec![], data, support, frequency, mask, mask_stack: vec![cloned_mask], ntransactions, updated, nchunks }
     }
 
 

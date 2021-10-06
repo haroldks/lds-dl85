@@ -1,9 +1,11 @@
 use std::time::Instant;
+
+use float_cmp::{ApproxEq, F64Margin};
+
 use crate::cache::trie::{Trie, TrieNode};
 use crate::mining::its_ops_chunked::ItemsetOpsChunked;
 use crate::mining::types_def::{Attribute, Item};
 use crate::node::node::Node;
-use float_cmp::{ApproxEq, F64Margin};
 
 #[allow(dead_code)]
 pub struct DL85<'a> {
@@ -46,7 +48,7 @@ impl<'a> DL85<'a> {
 
         let mut out_of_time = false;
         if time_limit > 0. {
-            if instant.elapsed().as_secs() as f64 > time_limit{
+            if instant.elapsed().as_secs() as f64 > time_limit {
                 out_of_time = true;
             }
         }
@@ -63,10 +65,8 @@ impl<'a> DL85<'a> {
 
         if out_of_time {
             parent_node_data.node_error = parent_node_data.leaf_error;
-            return (cache, its_op, parent_node_data, instant)
+            return (cache, its_op, parent_node_data, instant);
         }
-
-
 
 
         let new_candidates = DL85::get_next_sucessors(&next_candidates, last_attribute, &mut its_op, min_support);
@@ -180,7 +180,7 @@ impl<'a> DL85<'a> {
             return (true, node);
         }
 
-        if node.leaf_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }){
+        if node.leaf_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }) {
             node.node_error = node.leaf_error;
             node.is_leaf = true;
             node.is_new = false;

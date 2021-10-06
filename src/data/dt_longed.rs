@@ -10,7 +10,7 @@ pub struct DataLong {
     pub nattributes: usize,
     pub nclasses: usize,
     pub data: Vec<Vec<u64>>,
-    pub target: Vec<Vec<u64>>
+    pub target: Vec<Vec<u64>>,
 }
 
 #[allow(dead_code)]
@@ -85,6 +85,6 @@ impl DataLong {
         }
 
 
-        Ok(DataLong { filename, ntransactions, nattributes, nclasses, data: final_inputs, target: final_targets})
+        Ok(DataLong { filename, ntransactions, nattributes, nclasses, data: final_inputs, target: final_targets })
     }
 }

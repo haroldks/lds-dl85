@@ -71,7 +71,6 @@ impl<'a> ItemsetOps<'a> {
             self.mask = Option::from(BitVec::from_elem(self.ntransactions, true));
             self.compute_support_from_mask()
         };
-
     }
 
 

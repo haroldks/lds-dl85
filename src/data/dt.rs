@@ -10,7 +10,7 @@ pub struct Data {
     pub nattributes: usize,
     pub nclasses: usize,
     pub data: Vec<BitVec>,
-    pub target: Vec<BitVec>
+    pub target: Vec<BitVec>,
 }
 
 #[allow(dead_code)]
@@ -55,6 +55,6 @@ impl Data {
             targets_bv[*class].set(idx, true)
         }
 
-        Ok(Data { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv})
+        Ok(Data { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv })
     }
 }
