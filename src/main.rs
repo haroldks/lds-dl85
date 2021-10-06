@@ -1,3 +1,4 @@
+use std::time::Instant;
 use mining::types_def::*;
 
 use crate::cache::trie::*;
@@ -17,9 +18,9 @@ mod tree;
 
 fn main() { // TODO: Unit tests
 
-    let datac = DataChuncked::new("datasets/heart-cleveland.txt".to_string()).unwrap();
+    let datac = DataChuncked::new("datasets/tic-tac-toe.txt".to_string()).unwrap();
     let its_opsd = ItemsetOpsChunked::new(&datac, None, None, datac.ntransactions, false, datac.data[0].len());
-    let mut algo = DL85::new(10, 3, 200., 1000., Trie::new(), its_opsd);
+    let mut algo = DL85::new(100, 5, 500., 2., Trie::new(), its_opsd);
     let output = algo.run();
     let data = get_solution_tree(output.0);
     println!("{:?}", data.0);

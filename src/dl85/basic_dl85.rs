@@ -1,3 +1,4 @@
+use std::time::Instant;
 use crate::cache::trie::{Trie, TrieNode};
 use crate::mining::its_ops_chunked::ItemsetOpsChunked;
 use crate::mining::types_def::{Attribute, Item};
@@ -38,9 +39,17 @@ impl<'a> DL85<'a> {
     }
 
 
-    fn recursion(mut cache: Trie, mut its_op: ItemsetOpsChunked<'a>, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, min_support: u64, max_error: f64, mut parent_node_data: Node) -> (Trie, ItemsetOpsChunked<'a>, Node) {
+    fn recursion(mut cache: Trie, mut its_op: ItemsetOpsChunked<'a>, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64) -> (Trie, ItemsetOpsChunked<'a>, Node, Instant) {
         let mut child_upper_bound = upper_bound;
         let _min_lb = <f64>::MAX;
+
+        let mut out_of_time = false;
+        if time_limit > 0. {
+            if instant.elapsed().as_secs() as f64 > time_limit{
+                out_of_time = true;
+            }
+        }
+
 
         let current_support = its_op.support() as u64;
 
@@ -48,8 +57,15 @@ impl<'a> DL85<'a> {
 
         if data.0 {
             cache.update(&current_itemset, data.1);
-            return (cache, its_op, data.1);
+            return (cache, its_op, data.1, instant);
         }
+
+        if out_of_time {
+            parent_node_data.node_error = parent_node_data.leaf_error;
+            return (cache, its_op, parent_node_data, instant)
+        }
+
+
 
 
         let new_candidates = DL85::get_next_sucessors(&next_candidates, last_attribute, &mut its_op, min_support);
@@ -58,7 +74,7 @@ impl<'a> DL85<'a> {
             parent_node_data.node_error = parent_node_data.leaf_error;
             parent_node_data.is_new = false;
             cache.update(&current_itemset, parent_node_data);
-            return (cache, its_op, parent_node_data);
+            return (cache, its_op, parent_node_data, instant);
         }
 
         for attribute in &new_candidates {
@@ -74,7 +90,7 @@ impl<'a> DL85<'a> {
             let mut first_node_data = DL85::retrieve_cache_emplacement_for_current_its(&mut cache, &items[0], depth, &mut its_op); // Error computation // cache_ref, item_ref, depth
 
 
-            let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), child_upper_bound, depth + 1, max_depth, min_support, max_error, first_node_data);
+            let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), child_upper_bound, depth + 1, max_depth, min_support, max_error, first_node_data, instant, time_limit);
 
             cache = data.0;
             its_op = data.1;
@@ -94,7 +110,7 @@ impl<'a> DL85<'a> {
 
                 let remaining_ub = child_upper_bound - first_split_error;
                 child_item_set.sort_unstable();
-                let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), remaining_ub, depth + 1, max_depth, min_support, max_error, second_node_data);
+                let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), remaining_ub, depth + 1, max_depth, min_support, max_error, second_node_data, instant, time_limit);
 
                 cache = data.0;
                 its_op = data.1;
@@ -120,11 +136,11 @@ impl<'a> DL85<'a> {
         }
 
         cache.is_done = true;
-        (cache, its_op, parent_node_data)
+        (cache, its_op, parent_node_data, instant)
     }
 
 
-    pub fn run(&mut self) -> (Trie, ItemsetOpsChunked<'a>, Node) {
+    pub fn run(&mut self) -> (Trie, ItemsetOpsChunked<'a>, Node, Instant) {
         let mut candidates_list: Vec<Attribute> = Vec::new();
         if self.min_support == 1 {
             candidates_list = (0..self.nattributes).collect::<Vec<Attribute>>(); // TODO: Information Gain ???
@@ -142,7 +158,11 @@ impl<'a> DL85<'a> {
 
         let empty_itemset: Vec<Item> = vec![];
 
-        DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, self.max_error, 0, self.max_depth, self.min_support, self.max_error, Node::new(<usize>::MAX, 0))
+        let now = Instant::now();
+
+        let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, self.max_error, 0, self.max_depth, self.min_support, self.max_error, Node::new(<usize>::MAX, 0), now, self.time_limit);
+        println!("Duration:  {:?} seconds", data.3.elapsed().as_secs());
+        data
     }
 
     fn check_if_stop_condition_reached(mut node: Node, upper_bond: f64, min_support: u64, current_support: u64, depth: u64, max_depth: u64) -> (bool, Node) { // TODO: Here we check if the node already exists. If not we create new one and return his address

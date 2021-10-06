@@ -4,11 +4,12 @@
 #### TODO Road Map
 
 - [x] Runnable Implementation
+- [ ] Implement early stop with timeout
+  - [x] Implement lazy stop using a timer (Will not directly stop but break each time)
+  - [ ] Check if it can be done using a thread
+- [ ] Sort successor by information gain or other
 - [ ] Move tree generation methods from the main file
 - [ ] Fix Useless tree split when the error is done on the same class in each split
-- [ ] Implement early stop with timeout
-  - [ ] Implement lazy stop using a timer (Will not directly stop but break each time)
-  - [ ] Check if it can be done using a thread
 - [ ] Test all implementations to see the fastest (Chunked, Not chunked)
 - [ ] Check Memory usage with C++ implementation
 - [ ] Merge tree node when fake leaves is created ?
