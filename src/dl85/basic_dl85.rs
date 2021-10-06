@@ -3,6 +3,7 @@ use crate::cache::trie::{Trie, TrieNode};
 use crate::mining::its_ops_chunked::ItemsetOpsChunked;
 use crate::mining::types_def::{Attribute, Item};
 use crate::node::node::Node;
+use float_cmp::{ApproxEq, F64Margin};
 
 #[allow(dead_code)]
 pub struct DL85<'a> {
@@ -179,7 +180,7 @@ impl<'a> DL85<'a> {
             return (true, node);
         }
 
-        if node.leaf_error == 0. {
+        if node.leaf_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }){
             node.node_error = node.leaf_error;
             node.is_leaf = true;
             node.is_new = false;

@@ -8,3 +8,4 @@ edition = "2018"
 [dependencies]
 bit-vec = "0.6"
 substring = "1.4.5"
+float-cmp = "0.9.0"
