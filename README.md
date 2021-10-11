@@ -5,6 +5,7 @@
 
 - [x] Runnable Implementation
 - [x] Move tree generation methods out of the main file
+- [x] Implement a predictor and a metric computer
 - [ ] Implement early stop with timeout
   - [x] Implement lazy stop using a timer (Will not directly stop but break each time)
   - [ ] Check if it can be done using a thread
