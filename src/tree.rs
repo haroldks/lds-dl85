@@ -3,7 +3,7 @@ use std::fmt::Formatter;
 
 use crate::mining::types_def::Attribute;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Tree {
     pub root: Attribute,
     pub left: Vec<Tree>,
