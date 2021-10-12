@@ -11,6 +11,7 @@ pub fn get_solution_tree(cache: Trie) -> (Tree, Trie) {
     } else {
         let best_attribute = cache.root.data.test;
         let mut tree = Tree::new(best_attribute);
+        tree.error = Option::from(cache.root.data.node_error);
         let branches = vec![vec![(best_attribute, false)], vec![(best_attribute, true)]];
 
         let data = get_sub_tree(branches[0].clone(), cache);
