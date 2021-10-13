@@ -15,11 +15,11 @@ mod solution;
 
 fn main() { // TODO: Unit tests
 
-    let filename = "datasets/tic-tac-toe.txt".to_string();
+    let filename = "datasets/anneal.txt".to_string();
 
     let datac = DataChuncked::new(filename.clone()).unwrap();
     let its_opsd = ItemsetOpsChunked::new(&datac, None, None, datac.ntransactions, false, datac.data[0].len());
-    let mut algo = DL85::new(100, 4, 1000., 0., Trie::new(), its_opsd);
+    let mut algo = DL85::new(1, 4, <f64>::MAX, 0., Trie::new(), its_opsd);
     let output = algo.run();
     let data = get_solution_tree(output.0);
     let dd = get_data_as_transactions_and_target(filename.clone()).unwrap();

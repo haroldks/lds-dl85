@@ -7,6 +7,69 @@ use crate::mining::its_ops_chunked::ItemsetOpsChunked;
 use crate::mining::types_def::{Attribute, Item};
 use crate::node::node::Node;
 
+use clokwerk::{Job, Scheduler, TimeUnits};
+// Import week days and WeekDay
+use clokwerk::Interval::*;
+use std::thread;
+use std::time::Duration;
+
+use plotters::prelude::*;
+
+static mut CURRENT_ERROR: f64  = 0.;
+static mut ERRORS: Vec<f32>  = vec![];
+
+
+fn make_a_plot(array: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
+
+    let root = BitMapBackend::new("plotters-doc-data.png", (640, 480)).into_drawing_area();
+    let mut lol = array.iter().enumerate().map(|x| (x.0 as f32, *x.1)).collect::<Vec<(f32, f32)>>();
+
+    root.fill(&WHITE);
+    let root = root.margin(10, 10, 10, 10);
+    // After this point, we should be able to draw construct a chart context
+    let mut chart = ChartBuilder::on(&root)
+        // Set the caption of the chart
+        .caption("This is our first plot", ("sans-serif", 40).into_font())
+        // Set the size of the label region
+        .x_label_area_size(20)
+        .y_label_area_size(40)
+        // Finally attach a coordinate on the drawing area and make a chart context
+        .build_cartesian_2d(0f32..(lol.len() as f32), IntoLogRange::log_scale(170f32..<f32>::MAX))?;
+
+    // Then we can draw a mesh
+    chart
+        .configure_mesh()
+        // We can customize the maximum number of labels allowed for each axis
+        .x_labels(5)
+        .y_labels(5)
+        // We can also change the format of the label text
+        .y_label_formatter(&|x| format!("{:.3}", x))
+        .draw()?;
+
+    // And we can draw something in the drawing area
+    chart.draw_series(LineSeries::new(
+        lol.clone(),
+        &RED,
+    ))?;
+    // Similarly, we can draw point series
+    // chart.draw_series(PointSeries::of_element(
+    //     lol,
+    //     5,
+    //     &RED,
+    //     &|c, s, st| {
+    //         return EmptyElement::at(c)    // We want to construct a composed element on-the-fly
+    //             + Circle::new((0,0),s,st.filled()) // At this point, the new pixel coordinate is established
+    //             + Text::new(format!("{:?}", c), (10, 0), ("sans-serif", 10).into_font());
+    //     },
+    // ))?;
+    Ok(())
+}
+
+
+
+
+
+
 #[allow(dead_code)]
 pub struct DL85<'a> {
     // TODO: Allow it to use generic types for differents ITS and DATA. Also solve the problem of the cache and its by removing them from the attributes'
@@ -53,6 +116,9 @@ impl<'a> DL85<'a> {
             }
         }
 
+        unsafe {
+            CURRENT_ERROR = cache.root.data.node_error;
+        }
 
         let current_support = its_op.support() as u64;
 
@@ -143,6 +209,9 @@ impl<'a> DL85<'a> {
 
     pub fn run(&mut self) -> (Trie, ItemsetOpsChunked<'a>, Node, Instant) {
         let mut candidates_list: Vec<Attribute> = Vec::new();
+
+
+
         if self.min_support == 1 {
             candidates_list = (0..self.nattributes).collect::<Vec<Attribute>>(); // TODO: Information Gain ???
         } else {
@@ -152,7 +221,12 @@ impl<'a> DL85<'a> {
                 }
             }
         }
+        let mut scheduler = Scheduler::new();
 
+        unsafe { scheduler.every(0.seconds()).run(move || {     let lol = CURRENT_ERROR;
+            ERRORS.push(lol as f32);
+                                                                    println!("Error is {:?}, ", lol)}); };
+        let thread_handle = scheduler.watch_thread(Duration::from_millis(100));
 
         let cache = Trie::new();
         let its_ops = ItemsetOpsChunked::new(self.its_op.data, Option::from(self.min_support as usize), None, self.ntransactions, false, self.its_op.data.data[0].len());
@@ -163,6 +237,11 @@ impl<'a> DL85<'a> {
 
         let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, self.max_error, 0, self.max_depth, self.min_support, self.max_error, Node::new(<usize>::MAX, 0), now, self.time_limit);
         println!("Duration:  {:?} seconds", data.3.elapsed().as_secs());
+        thread_handle.stop();
+        unsafe {
+            println!("Errors : {:?}", ERRORS);
+            make_a_plot(ERRORS.clone());
+        }
         data
     }
 
@@ -244,3 +323,4 @@ impl<'a> DL85<'a> {
         all_supports
     }
 }
+
