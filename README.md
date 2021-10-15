@@ -6,12 +6,12 @@
 - [x] Runnable Implementation
 - [x] Move tree generation methods out of the main file
 - [x] Implement a predictor and a metric computer
-- [ ] Implement early stop with timeout
+- [x] Implement early stop with timeout
   - [x] Implement lazy stop using a timer (Will not directly stop but break each time)
-  - [ ] Check if it can be done using a thread
-- [ ] Implement error reading at fixed time
-  - [ ] Implement cache cloning in a file at fixed time in another thread
-  - [ ] Use the saved thread and a test set to see the final error ?
+  - [x] Check if it can be done using a thread
+- [x] Implement error reading at fixed time
+- [ ] Move parameter from constructor to the run algo
+- [ ] Implement Generic type and common trait for its for the DL85 struct
 - [ ] Sort successor by information gain or other
 - [ ] Fix Useless tree split when the error is done on the same class in each split
 - [ ] Test all implementations to see the fastest (Chunked, Not chunked)
