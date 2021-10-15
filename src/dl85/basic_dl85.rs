@@ -26,7 +26,7 @@ fn make_a_plot(array: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
     // After this point, we should be able to draw construct a chart context
     let mut chart = ChartBuilder::on(&root)
         // Set the caption of the chart
-        .caption("This is our first plot", ("sans-serif", 40).into_font())
+        .caption("Error Plot", ("sans-serif", 40).into_font())
         // Set the size of the label region
         .x_label_area_size(20)
         .y_label_area_size(40)
