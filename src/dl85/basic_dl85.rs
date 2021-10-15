@@ -70,12 +70,11 @@ pub struct DL85 {
     nattributes: usize,
     nclasses: usize,
 
-
 }
 
 #[allow(dead_code)]
-impl <'a> DL85 {
-    pub fn new(data : (usize, usize, usize)) -> DL85 {
+impl<'a> DL85 {
+    pub fn new(data: (usize, usize, usize)) -> DL85 {
         DL85 {
             ntransactions: data.0,
             nattributes: data.1,
@@ -85,7 +84,6 @@ impl <'a> DL85 {
     }
 
     pub fn run(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, mut its_ops: ItemsetOpsChunked<'a>, cache: Trie) -> (Trie, ItemsetOpsChunked<'a>, Node, Instant) {
-
         let mut scheduler = Scheduler::new(); // Scheduler for the error save time
         let thread_handle; // The thread handler to stop
 
@@ -104,12 +102,12 @@ impl <'a> DL85 {
 
         if error_save_time >= 0 {
             unsafe {
-                scheduler.every((error_save_time as u32) .seconds()).run(move || {
+                scheduler.every((error_save_time as u32).seconds()).run(move || {
                     let temp_error = CURRENT_ERROR;
                     ERRORS.push(temp_error as f32);
                 });
             };
-            thread_handle  = scheduler.watch_thread(Duration::from_millis(100));
+            thread_handle = scheduler.watch_thread(Duration::from_millis(100));
         }
 
 
@@ -260,7 +258,7 @@ impl <'a> DL85 {
     }
 
 
-    pub fn retrieve_cache_emplacement_for_current_its(cache_ref: &'a mut Trie, item: &Item, depth: u64, its_op: &mut ItemsetOpsChunked) -> Node { //TODO:  Here we do the creation of the new cache emplacement and compute the error
+    fn retrieve_cache_emplacement_for_current_its(cache_ref: &'a mut Trie, item: &Item, depth: u64, its_op: &mut ItemsetOpsChunked) -> Node { //TODO:  Here we do the creation of the new cache emplacement and compute the error
         let mut its = its_op.current.clone();
         its.sort_unstable();
         let mut node = cache_ref.insert(&its);
