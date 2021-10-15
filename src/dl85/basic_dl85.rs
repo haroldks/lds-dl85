@@ -64,41 +64,75 @@ fn make_a_plot(array: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
 
 
 #[allow(dead_code)]
-pub struct DL85<'a> {
+pub struct DL85 {
     // TODO: Allow it to use generic types for differents ITS and DATA. Also solve the problem of the cache and its by removing them from the attributes'
-    // TODO: Add time limits options.
-
     ntransactions: usize,
-    nclasses: usize,
     nattributes: usize,
-    min_support: u64,
-    max_depth: u64,
-    max_error: f64,
-    time_limit: f64,
-    cache: Trie,
-    its_op: ItemsetOpsChunked<'a>,
+    nclasses: usize,
+
 
 }
 
 #[allow(dead_code)]
-impl<'a> DL85<'a> {
-    pub fn new(min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, cache: Trie, its_op: ItemsetOpsChunked) -> DL85 {
+impl <'a> DL85 {
+    pub fn new(data : (usize, usize, usize)) -> DL85 {
         DL85 {
-            ntransactions: its_op.data.ntransactions,
-            nclasses: its_op.data.nclasses,
-            nattributes: its_op.data.nattributes,
-            min_support,
-            max_depth,
-            max_error,
-            time_limit,
-            cache,
-            its_op,
+            ntransactions: data.0,
+            nattributes: data.1,
+            nclasses: data.2,
 
         }
     }
 
+    pub fn run(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, mut its_ops: ItemsetOpsChunked<'a>, cache: Trie) -> (Trie, ItemsetOpsChunked<'a>, Node, Instant) {
 
-    fn recursion(mut cache: Trie, mut its_op: ItemsetOpsChunked<'a>, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64) -> (Trie, ItemsetOpsChunked<'a>, Node, Instant) {
+        let mut scheduler = Scheduler::new(); // Scheduler for the error save time
+        let thread_handle; // The thread handler to stop
+
+        let mut candidates_list: Vec<Attribute> = Vec::new();
+
+
+        if min_support == 1 {
+            candidates_list = (0..self.nattributes).collect::<Vec<Attribute>>(); // TODO: Information Gain ???
+        } else {
+            for i in 0..self.nattributes {
+                if its_ops.temp_union(&(i, false)) >= min_support as usize && its_ops.temp_union(&(i, true)) >= min_support as usize {
+                    candidates_list.push(i);
+                }
+            }
+        }
+
+        if error_save_time >= 0 {
+            unsafe {
+                scheduler.every((error_save_time as u32) .seconds()).run(move || {
+                    let temp_error = CURRENT_ERROR;
+                    ERRORS.push(temp_error as f32);
+                });
+            };
+            thread_handle  = scheduler.watch_thread(Duration::from_millis(100));
+        }
+
+
+        let empty_itemset: Vec<Item> = vec![];
+
+        let now = Instant::now();
+
+        let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, max_error, 0, max_depth, min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit);
+        println!("Duration:  {:?} seconds", data.3.elapsed().as_secs());
+
+        if error_save_time > 0 {
+            //thread_handle.stop();
+            unsafe {
+                println!("Errors for each {} seconds : {:?}", error_save_time, ERRORS);
+                make_a_plot(ERRORS.clone());
+            }
+        }
+
+        data
+    }
+
+
+    fn recursion(mut cache: Trie, mut its_op: ItemsetOpsChunked, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64) -> (Trie, ItemsetOpsChunked, Node, Instant) {
         unsafe {
             CURRENT_ERROR = cache.root.data.node_error;
         }
@@ -201,56 +235,6 @@ impl<'a> DL85<'a> {
     }
 
 
-    pub fn run(&mut self, error_save_time: i32) -> (Trie, ItemsetOpsChunked<'a>, Node, Instant) {
-
-        let mut scheduler = Scheduler::new(); // Scheduler for the error save time
-        let thread_handle; // The thread handler to stop
-
-        let mut candidates_list: Vec<Attribute> = Vec::new();
-
-
-        if self.min_support == 1 {
-            candidates_list = (0..self.nattributes).collect::<Vec<Attribute>>(); // TODO: Information Gain ???
-        } else {
-            for i in 0..self.nattributes {
-                if self.its_op.temp_union(&(i, false)) >= self.min_support as usize && self.its_op.temp_union(&(i, true)) >= self.min_support as usize {
-                    candidates_list.push(i);
-                }
-            }
-        }
-
-        if error_save_time >= 0 {
-            unsafe {
-                scheduler.every((error_save_time as u32) .seconds()).run(move || {
-                    let temp_error = CURRENT_ERROR;
-                    ERRORS.push(temp_error as f32);
-                });
-            };
-            thread_handle  = scheduler.watch_thread(Duration::from_millis(100));
-        }
-
-
-        let cache = Trie::new();
-        let its_ops = ItemsetOpsChunked::new(self.its_op.data, Option::from(self.min_support as usize), None, self.ntransactions, false, self.its_op.data.data[0].len());
-
-        let empty_itemset: Vec<Item> = vec![];
-
-        let now = Instant::now();
-
-        let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, self.max_error, 0, self.max_depth, self.min_support, self.max_error, Node::new(<usize>::MAX, 0), now, self.time_limit);
-        println!("Duration:  {:?} seconds", data.3.elapsed().as_secs());
-
-        if error_save_time > 0 {
-            //thread_handle.stop();
-            unsafe {
-                println!("Errors for each {} seconds : {:?}", error_save_time, ERRORS);
-                make_a_plot(ERRORS.clone());
-            }
-        }
-
-        data
-    }
-
     fn check_if_stop_condition_reached(mut node: Node, upper_bond: f64, min_support: u64, current_support: u64, depth: u64, max_depth: u64) -> (bool, Node) { // TODO: Here we check if the node already exists. If not we create new one and return his address
 
 
@@ -315,18 +299,18 @@ impl<'a> DL85<'a> {
     }
 
 
-    fn get_candidates_support(&mut self, candidates: &Vec<usize>) -> Vec<(usize, usize)> {
-        let mut all_supports = vec![];
-        for candidate in candidates {
-            let items = vec![(*candidate, true), (*candidate, false)];
-            let mut c_supports = vec![];
-            for it in items {
-                c_supports.push(self.its_op.union_cover(&it));
-                self.its_op.backtrack();
-            }
-            all_supports.push((c_supports[0], c_supports[1]));
-        }
-        all_supports
-    }
+    // fn get_candidates_support(&mut self, candidates: &Vec<usize>) -> Vec<(usize, usize)> {
+    //     let mut all_supports = vec![];
+    //     for candidate in candidates {
+    //         let items = vec![(*candidate, true), (*candidate, false)];
+    //         let mut c_supports = vec![];
+    //         for it in items {
+    //             c_supports.push(self.its_op.union_cover(&it));
+    //             self.its_op.backtrack();
+    //         }
+    //         all_supports.push((c_supports[0], c_supports[1]));
+    //     }
+    //     all_supports
+    // }
 }
 
