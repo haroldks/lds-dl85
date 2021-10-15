@@ -104,11 +104,22 @@ pub fn get_data_as_transactions_and_target(filename: String) -> Result<(Vec<BitV
 }
 
 
-pub fn compute_metrics(y_test: Vec<usize>, y_pred: Vec<usize>, nclasses: usize) -> Vec<Vec<i32>> {
+pub fn confusion_matrix(y_test: Vec<usize>, y_pred: Vec<usize>, nclasses: usize) -> Vec<Vec<i32>> {
     let mut matrix = vec![vec![0; nclasses]; nclasses];
     let len = y_test.len();
     for i in 0..len {
         matrix[y_test[i]][y_pred[i]] += 1;
     }
     return matrix;
+}
+
+pub fn accuracy(y_test: Vec<usize>, y_pred: Vec<usize>) -> f64{
+
+    assert_eq!(y_test.len(), y_pred.len(), "Vectors length mismatch");
+
+    let mut equal = vec![];
+    for i in 0..y_pred.len() {
+        equal.push((y_pred[i] == y_test[i]));
+    }
+    equal.iter().filter(|x| **x).count() as f64 / y_pred.len() as f64
 }
