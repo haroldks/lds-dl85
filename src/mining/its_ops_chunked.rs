@@ -173,4 +173,8 @@ impl<'a> ItemsetOpsChunked<'a> {
         let error = classes_cover.iter().sum::<usize>() - max_class.1;
         (error, max_class.0)
     }
+
+    pub fn get_infos(&self) -> (usize, usize, usize) {
+        (self.data.ntransactions, self.data.nattributes, self.data.nclasses)
+    }
 }
