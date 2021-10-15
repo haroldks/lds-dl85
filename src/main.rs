@@ -17,8 +17,17 @@ fn main() { // TODO: Unit tests
 
     let filename = "datasets/anneal.txt".to_string();
 
-    let datac = DataChuncked::new(filename.clone()).unwrap();
-    let its_opsd = ItemsetOpsChunked::new(&datac, None, None, datac.ntransactions, false, datac.data[0].len());
+    let data = DataChuncked::new(filename.clone()).unwrap();
+    let itemset_biset_operations = ItemsetOpsChunked::new(&datac, None, None, datac.ntransactions, false, datac.data[0].len());
+
+    // Algorithms parameters
+    let min_support = 64;
+    let max_depth = 4;
+    let max_error = <f64>::MAX;
+    let time_limit = 10.;
+    let error_save_time = -1;
+
+
     let mut algo = DL85::new(100, 4, <f64>::MAX, 10., Trie::new(), its_opsd);
     let output = algo.run(1);
     let data = get_solution_tree(output.0);
