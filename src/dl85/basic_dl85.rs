@@ -1,26 +1,23 @@
+use std::thread;
+use std::time::Duration;
 use std::time::Instant;
 
+use clokwerk::{Job, Scheduler, TimeUnits};
+// Import week days and WeekDay
+use clokwerk::Interval::*;
 use float_cmp::{ApproxEq, F64Margin};
+use plotters::prelude::*;
 
 use crate::cache::trie::{Trie, TrieNode};
 use crate::mining::its_ops_chunked::ItemsetOpsChunked;
 use crate::mining::types_def::{Attribute, Item};
 use crate::node::node::Node;
 
-use clokwerk::{Job, Scheduler, TimeUnits};
-// Import week days and WeekDay
-use clokwerk::Interval::*;
-use std::thread;
-use std::time::Duration;
-
-use plotters::prelude::*;
-
-static mut CURRENT_ERROR: f64  = 0.;
-static mut ERRORS: Vec<f32>  = vec![];
+static mut CURRENT_ERROR: f64 = 0.;
+static mut ERRORS: Vec<f32> = vec![];
 
 
 fn make_a_plot(array: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
-
     let root = BitMapBackend::new("plotters-doc-data.png", (640, 480)).into_drawing_area();
     let mut lol = array.iter().enumerate().map(|x| (x.0 as f32, *x.1)).collect::<Vec<(f32, f32)>>();
 
@@ -66,10 +63,6 @@ fn make_a_plot(array: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 
-
-
-
-
 #[allow(dead_code)]
 pub struct DL85<'a> {
     // TODO: Allow it to use generic types for differents ITS and DATA. Also solve the problem of the cache and its by removing them from the attributes'
@@ -106,6 +99,11 @@ impl<'a> DL85<'a> {
 
 
     fn recursion(mut cache: Trie, mut its_op: ItemsetOpsChunked<'a>, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64) -> (Trie, ItemsetOpsChunked<'a>, Node, Instant) {
+        unsafe {
+            CURRENT_ERROR = cache.root.data.node_error;
+        }
+
+
         let mut child_upper_bound = upper_bound;
         let _min_lb = <f64>::MAX;
 
@@ -114,10 +112,6 @@ impl<'a> DL85<'a> {
             if instant.elapsed().as_secs() as f64 > time_limit {
                 out_of_time = true;
             }
-        }
-
-        unsafe {
-            CURRENT_ERROR = cache.root.data.node_error;
         }
 
         let current_support = its_op.support() as u64;
@@ -207,9 +201,12 @@ impl<'a> DL85<'a> {
     }
 
 
-    pub fn run(&mut self) -> (Trie, ItemsetOpsChunked<'a>, Node, Instant) {
-        let mut candidates_list: Vec<Attribute> = Vec::new();
+    pub fn run(&mut self, error_save_time: i32) -> (Trie, ItemsetOpsChunked<'a>, Node, Instant) {
 
+        let mut scheduler = Scheduler::new(); // Scheduler for the error save time
+        let thread_handle; // The thread handler to stop
+
+        let mut candidates_list: Vec<Attribute> = Vec::new();
 
 
         if self.min_support == 1 {
@@ -221,12 +218,17 @@ impl<'a> DL85<'a> {
                 }
             }
         }
-        let mut scheduler = Scheduler::new();
 
-        unsafe { scheduler.every(0.seconds()).run(move || {     let lol = CURRENT_ERROR;
-            ERRORS.push(lol as f32);
-                                                                    println!("Error is {:?}, ", lol)}); };
-        let thread_handle = scheduler.watch_thread(Duration::from_millis(100));
+        if error_save_time >= 0 {
+            unsafe {
+                scheduler.every((error_save_time as u32) .seconds()).run(move || {
+                    let temp_error = CURRENT_ERROR;
+                    ERRORS.push(temp_error as f32);
+                });
+            };
+            thread_handle  = scheduler.watch_thread(Duration::from_millis(100));
+        }
+
 
         let cache = Trie::new();
         let its_ops = ItemsetOpsChunked::new(self.its_op.data, Option::from(self.min_support as usize), None, self.ntransactions, false, self.its_op.data.data[0].len());
@@ -237,11 +239,15 @@ impl<'a> DL85<'a> {
 
         let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, self.max_error, 0, self.max_depth, self.min_support, self.max_error, Node::new(<usize>::MAX, 0), now, self.time_limit);
         println!("Duration:  {:?} seconds", data.3.elapsed().as_secs());
-        thread_handle.stop();
-        unsafe {
-            println!("Errors : {:?}", ERRORS);
-            make_a_plot(ERRORS.clone());
+
+        if error_save_time > 0 {
+            //thread_handle.stop();
+            unsafe {
+                println!("Errors for each {} seconds : {:?}", error_save_time, ERRORS);
+                make_a_plot(ERRORS.clone());
+            }
         }
+
         data
     }
 
