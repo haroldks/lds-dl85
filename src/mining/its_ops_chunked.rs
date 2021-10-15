@@ -45,7 +45,7 @@ impl<'a> ItemsetOpsChunked<'a> {
         self.support();
     }
 
-    pub fn union_cover(&mut self, second_its: &Item) -> usize {
+    pub fn intersection_cover(&mut self, second_its: &Item) -> usize {
         self.current.push(*second_its);
         self.updated = false;
         self.support = None;
@@ -54,7 +54,7 @@ impl<'a> ItemsetOpsChunked<'a> {
         self.support()
     }
 
-    pub fn temp_union(&mut self, second_its: &Item) -> usize {
+    pub fn temp_intersection(&mut self, second_its: &Item) -> usize {
         self.current.push(*second_its);
         self.updated = false;
         self.support = None;

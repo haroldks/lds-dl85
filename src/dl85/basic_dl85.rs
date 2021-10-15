@@ -96,7 +96,7 @@ impl <'a> DL85 {
             candidates_list = (0..self.nattributes).collect::<Vec<Attribute>>(); // TODO: Information Gain ???
         } else {
             for i in 0..self.nattributes {
-                if its_ops.temp_union(&(i, false)) >= min_support as usize && its_ops.temp_union(&(i, true)) >= min_support as usize {
+                if its_ops.temp_intersection(&(i, false)) >= min_support as usize && its_ops.temp_intersection(&(i, true)) >= min_support as usize {
                     candidates_list.push(i);
                 }
             }
@@ -174,7 +174,7 @@ impl <'a> DL85 {
 
         for attribute in &new_candidates {
             let items: Vec<Item> = vec![(*attribute, false), (*attribute, true)];
-            let _first_item_sup = its_op.union_cover(&items[0]); // Here current is supposed to be updated
+            let _first_item_sup = its_op.intersection_cover(&items[0]); // Here current is supposed to be updated
 
 
             let mut child_item_set = current_itemset.clone();
@@ -196,7 +196,7 @@ impl <'a> DL85 {
             its_op.backtrack();
 
             if first_node_data.node_error < upper_bound {
-                let _second_item_sup = its_op.union_cover(&items[1]);
+                let _second_item_sup = its_op.intersection_cover(&items[1]);
 
                 let mut child_item_set = current_itemset.clone();
                 child_item_set.push(items[1]);
@@ -289,7 +289,7 @@ impl <'a> DL85 {
             if *candidate == last_attribute {
                 continue;
             }
-            let left_sup = its_op.temp_union(&(*candidate, false));
+            let left_sup = its_op.temp_intersection(&(*candidate, false));
             let right_sup = current_support - left_sup;
             if left_sup >= min_support as usize && right_sup >= min_support as usize {
                 next_candidates.push(*candidate)
