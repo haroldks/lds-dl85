@@ -10,7 +10,9 @@
   - [x] Implement lazy stop using a timer (Will not directly stop but break each time)
   - [x] Check if it can be done using a thread
 - [x] Implement error reading at fixed time
-- [ ] Move parameter from constructor to the run algo
+- [x] Move parameter from constructor to the run algo
+- [x] Change to use environment parameters
+- [ ] Use clap crate to allow default configuration for the algorithm
 - [ ] Implement Generic type and common trait for its for the DL85 struct
 - [ ] Sort successor by information gain or other
 - [ ] Fix Useless tree split when the error is done on the same class in each split
