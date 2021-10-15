@@ -3,7 +3,7 @@ use std::io::{BufRead, BufReader, Error};
 use bit_vec::BitVec;
 use crate::cache::trie::Trie;
 use crate::mining::types_def::Item;
-use crate::tree::Tree;
+use crate::solution::tree::Tree;
 
 pub fn get_solution_tree(cache: Trie) -> (Tree, Trie) {
     if !cache.is_done || cache.root.data.test == <usize>::MAX {

@@ -3,14 +3,12 @@ use crate::data::dt_chuncked::*;
 use crate::dl85::basic_dl85::DL85;
 use crate::mining::its_ops_chunked::ItemsetOpsChunked;
 use crate::solution::solution::{accuracy, confusion_matrix, get_data_as_transactions_and_target, get_solution_tree, predict};
-use crate::tree::Tree;
 
 mod mining;
 mod data;
 mod cache;
 mod node;
 mod dl85;
-mod tree;
 mod solution;
 
 fn main() { // TODO: Unit tests
