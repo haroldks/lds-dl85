@@ -9,6 +9,7 @@ use float_cmp::{ApproxEq, F64Margin};
 use plotters::prelude::*;
 
 use crate::cache::trie::{Trie, TrieNode};
+use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
 use crate::mining::its_ops_chunked::ItemsetOpsChunked;
 use crate::mining::types_def::{Attribute, Item};
 use crate::node::node::Node;

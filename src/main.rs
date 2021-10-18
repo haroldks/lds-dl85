@@ -2,6 +2,7 @@ use crate::cache::trie::*;
 use crate::data::dt_chuncked::*;
 use crate::dl85::basic_dl85::DL85;
 use crate::mining::its_ops_chunked::ItemsetOpsChunked;
+use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
 use crate::solution::solution::{accuracy, confusion_matrix, get_data_as_transactions_and_target, get_solution_tree, predict};
 use std::{env, process};
 use crate::config::Config;
