@@ -23,11 +23,11 @@ impl DataLong {
 
         let data_lines: Vec<String> = buffered.lines().map(|x| x.unwrap()).collect();
 
-        DataLong::data_chuncked(data_lines, filename)
+        DataLong::data_to_long(data_lines, filename)
     }
 
 
-    fn data_chuncked(data: Vec<String>, filename: String) -> Result<DataLong, Error> {
+    fn data_to_long(mut data: Vec<String>, filename: String) -> Result<DataLong, Error> {
         let nattributes = data[0].split_ascii_whitespace().collect::<Vec<&str>>().len() - 1;
         let ntransactions = data.len();
 
@@ -38,53 +38,80 @@ impl DataLong {
                 _ => { (ntransactions / 64) + 1 }
             };
         }
-        let mut inputs = vec!["".to_string(); nattributes];
+        let mut inputs = vec![vec![0u64; nchunks]; nattributes];
         let mut target = vec![];
 
-        for (_i, line) in data.iter().enumerate() {
-            let line = line.split_ascii_whitespace().collect::<Vec<&str>>();
+        data.reverse();
+
+        let mut actual_chunk = nchunks - 1;
+        let mut counter = 0;
+
+
+
+        for line in data.iter() {
+
+            if counter == 64 {
+                actual_chunk -= 1;
+                counter = 0;
+            }
+            let mut line = line.split_ascii_whitespace().collect::<Vec<&str>>();
             for (j, l) in line.iter().enumerate() {
                 match j {
                     0 => { target.push(l.parse::<usize>().unwrap()) }
                     _ => {
-                        inputs[(j - 1)].push_str(l);
+                        if l == &"1"{
+                            inputs[(j - 1)][actual_chunk] = DataLong::bit_to_one(inputs[(j - 1)][actual_chunk], counter as u64)
+                        }
                     }
                 }
+
             }
-        }
-
-        let mut final_inputs = vec![vec![]; nattributes];
-
-        for att in 0..nattributes {
-            let attrib_str = &mut inputs[att].as_str();
-
-            for i in (0..ntransactions).rev().step_by(64) {
-                let j = (i).saturating_sub(63);
-                let a = attrib_str.substring(j, i + 1);
-                final_inputs[att].push(<u64>::from_str_radix(&*a.chars().rev().collect::<String>(), 2).unwrap())
-            }
+            counter += 1;
         }
 
 
-        let nclasses = target.iter().collect::<HashSet<_>>().len();
+
+        let mut nclasses = target.iter().collect::<HashSet<_>>().len();
+
+        if nclasses < 2 {
+            nclasses = 2;
+        }
 
         let mut targets_bv = vec![];
-        for class in 0..nclasses {
-            targets_bv.push(target.iter().map(|x| ((*x == class) as usize).to_string()).collect::<String>());
+
+        for _ in 0..nclasses {
+            targets_bv.push(vec![0u64; nchunks])
         }
-        let mut final_targets = vec![vec![]; nclasses];
-        if nchunks > 1 {
-            for c in 0..nclasses {
-                let class_str = &mut targets_bv[c].as_str();
-                for i in (0..ntransactions).rev().step_by(64) {
-                    let j = (i).saturating_sub(63);
-                    let a = class_str.substring(j, i + 1);
-                    final_targets[c].push(<u64>::from_str_radix(&*a.chars().rev().collect::<String>(), 2).unwrap())
-                }
+        let tg_len = target.len();
+        let mut counter = 0;
+        let mut actual_chunk = nchunks - 1;
+        for i in 0..tg_len {
+            if counter == 64 {
+                actual_chunk -= 1;
+                counter = 0;
             }
+            let class = target[i];
+            targets_bv[class][actual_chunk] = DataLong::bit_to_one(targets_bv[class][actual_chunk], counter as u64);
+            counter += 1;
+
         }
+        // for (idx, class) in target.iter().enumerate() {
+        //     targets_bv[*class][idx / 64] = DataLong::bit_to_one(targets_bv[*class][idx / 64], 63 - (idx % 64) as u64);
+        //     if class == 1{
+        //         if idx/64 == 0:
+        //     }
+        // }
 
 
-        Ok(DataLong { filename, ntransactions, nattributes, nclasses, data: final_inputs, target: final_targets })
+
+
+
+        Ok(DataLong { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv })
+    }
+
+    fn bit_to_one(original: u64, bit: u64) -> u64 {
+        let mask = 1u64 << bit;
+        original |  mask
+
     }
 }
