@@ -43,7 +43,12 @@ impl Data {
             }
         }
 
-        let nclasses = target.iter().collect::<HashSet<_>>().len();
+        let mut nclasses = target.iter().collect::<HashSet<_>>().len();
+
+
+        if nclasses < 2 {
+            nclasses = 2;
+        }
 
         let mut targets_bv = vec![];
 
