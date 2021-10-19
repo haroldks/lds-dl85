@@ -84,7 +84,7 @@ impl<'a> DL85 {
         }
     }
 
-    pub fn run(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, mut its_ops: ItemsetOpsChunked<'a>, cache: Trie) -> (Trie, ItemsetOpsChunked<'a>, Node, Instant) {
+    pub fn run<T: ItemsetBitvector>(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, mut its_ops: T, cache: Trie) -> (Trie, T, Node, Instant) {
         let mut scheduler = Scheduler::new(); // Scheduler for the error save time
         let thread_handle; // The thread handler to stop
 
@@ -131,7 +131,7 @@ impl<'a> DL85 {
     }
 
 
-    fn recursion(mut cache: Trie, mut its_op: ItemsetOpsChunked, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64) -> (Trie, ItemsetOpsChunked, Node, Instant) {
+    fn recursion<T: ItemsetBitvector>(mut cache: Trie, mut its_op: T, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64) -> (Trie, T, Node, Instant) {
         unsafe {
             CURRENT_ERROR = cache.root.data.node_error;
         }
@@ -259,8 +259,8 @@ impl<'a> DL85 {
     }
 
 
-    fn retrieve_cache_emplacement_for_current_its(cache_ref: &'a mut Trie, item: &Item, depth: u64, its_op: &mut ItemsetOpsChunked) -> Node { //TODO:  Here we do the creation of the new cache emplacement and compute the error
-        let mut its = its_op.current.clone();
+    fn retrieve_cache_emplacement_for_current_its<T: ItemsetBitvector>(cache_ref: &'a mut Trie, item: &Item, depth: u64, its_op: &mut T) -> Node { //TODO:  Here we do the creation of the new cache emplacement and compute the error
+        let mut its = its_op.get_current();
         its.sort_unstable();
         let mut node = cache_ref.insert(&its);
 
@@ -280,7 +280,7 @@ impl<'a> DL85 {
     }
 
 
-    fn get_next_sucessors(candidates: &Vec<Attribute>, last_attribute: Attribute, its_op: &mut ItemsetOpsChunked<'a>, min_support: u64) -> Vec<Attribute> {
+    fn get_next_sucessors<T: ItemsetBitvector>(candidates: &Vec<Attribute>, last_attribute: Attribute, its_op: &mut T, min_support: u64) -> Vec<Attribute> {
         let mut next_candidates = vec![];
         let current_support = its_op.support();
 
