@@ -18,6 +18,8 @@ pub trait ItemsetBitvector {
 
     fn get_infos(&self) -> (usize, usize, usize);
 
+    fn get_current(&self) -> Vec<Item>;
+
 
 
 }

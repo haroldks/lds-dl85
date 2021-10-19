@@ -1,6 +1,6 @@
 use bit_vec::BitVec;
 
-use crate::data::dt_chuncked::DataChuncked;
+use crate::data::dt_chuncked::DataChunked;
 use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
 use crate::mining::types_def::*;
 
@@ -8,7 +8,7 @@ pub struct ItemsetOpsChunked<'a> {
     // TODO: Optimization for valids words using valids chuncks and limits variables
     // TODO: Look for options to changes the Vec to &[]. It can be faster
     pub current: Vec<Item>,
-    pub data: &'a DataChuncked,
+    pub data: &'a DataChunked,
     support: Option<usize>,
     frequency: Option<f32>,
     mask: Option<Vec<BitVec>>,
@@ -102,13 +102,19 @@ impl ItemsetBitvector for ItemsetOpsChunked<'_> {
     fn get_infos(&self) -> (usize, usize, usize) {
         (self.data.ntransactions, self.data.nattributes, self.data.nclasses)
     }
+
+    fn get_current(&self) -> Vec<Item> {
+        self.current.clone()
+    }
 }
 
 
 #[allow(dead_code)]
 impl <'a> ItemsetOpsChunked<'a> {
     // TODO : Implementation of valid words
-    pub fn new(data: &DataChuncked, support: Option<usize>, frequency: Option<f32>, ntransactions: usize, updated: bool, nchunks: usize) -> ItemsetOpsChunked {
+    pub fn new(data: &DataChunked) -> ItemsetOpsChunked {
+        let ntransactions= data.ntransactions;
+        let nchunks = data.data[0].len();
         let mut mask = Option::from(vec![BitVec::from_elem(64, true); nchunks]);
         let dead_bits = 64 - match ntransactions % 64 {
             0 => { 0 }
@@ -120,7 +126,7 @@ impl <'a> ItemsetOpsChunked<'a> {
         }
         let cloned_mask = mask.as_ref().unwrap().clone();
 
-        ItemsetOpsChunked { current: vec![], data, support, frequency, mask, mask_stack: vec![cloned_mask], ntransactions, updated, nchunks }
+        ItemsetOpsChunked { current: vec![], data, support: None, frequency: None, mask, mask_stack: vec![cloned_mask], ntransactions, updated: false, nchunks }
     }
 
     fn update_mask(&mut self, item: &Item) {
