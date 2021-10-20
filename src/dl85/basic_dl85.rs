@@ -117,7 +117,7 @@ impl<'a> DL85 {
         let now = Instant::now();
 
         let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, max_error, 0, max_depth, min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit);
-        println!("Duration:  {:?} seconds", data.3.elapsed().as_secs());
+        println!("Duration:  {:?} milliseconds", data.3.elapsed().as_millis());
 
         if error_save_time > 0 {
             //thread_handle.stop();
