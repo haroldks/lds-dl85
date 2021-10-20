@@ -12,8 +12,8 @@
 - [x] Implement error reading at fixed time
 - [x] Move parameter from constructor to the run algo
 - [x] Change to use environment parameters
+- [x] Implement Generic type and common trait for its for the DL85 struct
 - [ ] Use clap crate to allow default configuration for the algorithm
-- [ ] Implement Generic type and common trait for its for the DL85 struct
 - [ ] Sort successor by information gain or other
 - [ ] Fix Useless tree split when the error is done on the same class in each split
 - [ ] Test all implementations to see the fastest (Chunked, Not chunked)
