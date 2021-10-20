@@ -9,8 +9,8 @@ use std::time::Instant;
 use crate::config::Config;
 use crate::data::dt::Data;
 use crate::data::dt_longed::DataLong;
-use crate::data::dl_test::DataLongTest;
 use crate::mining::its_ops::ItemsetOps;
+use crate::mining::its_ops_long::ItemsetOpsLong;
 
 mod mining;
 mod data;
@@ -43,7 +43,6 @@ fn main() { // TODO: Unit tests
 
     let time = Instant::now();
     let datac = DataLong::new(filename.clone()).unwrap();
-    println!("Data {:?} ", datac.target);
     println!("Long {:?} milliseconds", time.elapsed().as_millis());
 
     let time = Instant::now();
@@ -52,8 +51,9 @@ fn main() { // TODO: Unit tests
 
 
 
-    let itemset_bitset_operations = ItemsetOpsChunked::new(&data);
+    let itemset_bitset_operations = ItemsetOpsLong::new(&datac);
     let its = ItemsetOps::new(&d);
+    let itsc = ItemsetOpsChunked::new(&data);
     let cache = Trie::new();
 
     // Algorithms parameters
@@ -67,7 +67,9 @@ fn main() { // TODO: Unit tests
     let mut algo = DL85::new(its.get_infos());
 
     print!("We start the run.. \n");
-    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, its, cache);
+    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, itemset_bitset_operations, cache);
+    let itemset_bitset_operations = ItemsetOpsLong::new(&datac);
+    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, itemset_bitset_operations, output.0);
     let data = get_solution_tree(output.0);
     let dd = get_data_as_transactions_and_target(filename.clone()).unwrap();
     println!("Tree: {:?}", data.0);
