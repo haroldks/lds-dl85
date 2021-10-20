@@ -15,6 +15,7 @@
 - [x] Implement Generic type and common trait for its for the DL85 struct
 - [ ] Use clap crate to allow default configuration for the algorithm
 - [ ] Sort successor by information gain or other
+- [ ] Implement Limited Discrepancy Search
 - [ ] Fix Useless tree split when the error is done on the same class in each split
 - [ ] Test all implementations to see the fastest (Chunked, Not chunked)
 - [ ] Check Memory usage with C++ implementation
