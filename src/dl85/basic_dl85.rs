@@ -1,3 +1,4 @@
+use std::iter::Map;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
@@ -15,6 +16,8 @@ use crate::mining::types_def::{Attribute, Item};
 use crate::node::node::Node;
 
 static mut CURRENT_ERROR: f64 = 0.;
+static mut NODE_EXP: u64 = 0;
+static mut CAME_HERE: u64 = 0;
 static mut ERRORS: Vec<f32> = vec![];
 
 
@@ -84,7 +87,7 @@ impl<'a> DL85 {
         }
     }
 
-    pub fn run<T: ItemsetBitvector>(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, mut its_ops: T, cache: Trie) -> (Trie, T, Node, Instant) {
+    pub fn run<T: ItemsetBitvector>(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, mut its_ops: T, cache: Trie, reload_cache: bool) -> (Trie, T, Node, Instant) {
         let mut scheduler = Scheduler::new(); // Scheduler for the error save time
         let thread_handle; // The thread handler to stop
 
@@ -116,8 +119,20 @@ impl<'a> DL85 {
 
         let now = Instant::now();
 
-        let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, max_error, 0, max_depth, min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit);
+        unsafe {
+            CAME_HERE = 0;
+            NODE_EXP = 0;
+        }
+        if reload_cache{
+            println!("Cache Size {:?}", cache.cachesize);
+        }
+
+        let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, max_error, 0, max_depth, min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, reload_cache);
         println!("Duration:  {:?} milliseconds", data.3.elapsed().as_millis());
+        unsafe{
+            println!("Came Here : {}, Reload: {}", CAME_HERE, NODE_EXP);
+        }
+
 
         if error_save_time > 0 {
             //thread_handle.stop();
@@ -131,12 +146,12 @@ impl<'a> DL85 {
     }
 
 
-    fn recursion<T: ItemsetBitvector>(mut cache: Trie, mut its_op: T, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64) -> (Trie, T, Node, Instant) {
+    fn recursion<T: ItemsetBitvector>(mut cache: Trie, mut its_op: T, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64, reload_cache: bool) -> (Trie, T, Node, Instant) {
         unsafe {
             CURRENT_ERROR = cache.root.data.node_error;
         }
 
-
+       // println!("Current ITS: {:?}", &current_itemset);
         let mut child_upper_bound = upper_bound;
         let _min_lb = <f64>::MAX;
 
@@ -149,24 +164,27 @@ impl<'a> DL85 {
 
         let current_support = its_op.support() as u64;
 
-        let data = DL85::check_if_stop_condition_reached(parent_node_data, upper_bound, min_support, current_support, depth, max_depth);
+        let data = DL85::check_if_stop_condition_reached(parent_node_data, upper_bound, min_support, current_support, depth, max_depth, out_of_time, reload_cache);
 
         if data.0 {
             cache.update(&current_itemset, data.1);
             return (cache, its_op, data.1, instant);
         }
 
-        if out_of_time {
-            parent_node_data.node_error = parent_node_data.leaf_error;
-            return (cache, its_op, parent_node_data, instant);
-        }
+        // if out_of_time {
+        //
+        //     parent_node_data.is_explored = false;
+        //     cache.set_node_exploration_status(&current_itemset, false);
+        //     parent_node_data.node_error = parent_node_data.leaf_error;
+        //     return (cache, its_op, parent_node_data, instant);
+        // }
 
 
         let new_candidates = DL85::get_next_sucessors(&next_candidates, last_attribute, &mut its_op, min_support);
 
         if new_candidates.is_empty() {
             parent_node_data.node_error = parent_node_data.leaf_error;
-            parent_node_data.is_new = false;
+            parent_node_data.is_explored = true;
             cache.update(&current_itemset, parent_node_data);
             return (cache, its_op, parent_node_data, instant);
         }
@@ -184,13 +202,25 @@ impl<'a> DL85 {
             let mut first_node_data = DL85::retrieve_cache_emplacement_for_current_its(&mut cache, &items[0], depth, &mut its_op); // Error computation // cache_ref, item_ref, depth
 
 
-            let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), child_upper_bound, depth + 1, max_depth, min_support, max_error, first_node_data, instant, time_limit);
-
+            let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), child_upper_bound, depth + 1, max_depth, min_support, max_error, first_node_data, instant, time_limit, reload_cache);
             cache = data.0;
             its_op = data.1;
             first_node_data = data.2;
+            first_node_data.is_explored = true;
+            if time_limit > 0. {
+                if data.3.elapsed().as_secs() as f64 > time_limit {
+                    out_of_time = true;
+                }
+            }
+            if out_of_time{
+                parent_node_data.is_explored = false;
+                first_node_data.is_explored = false;
+               cache.update(&child_item_set, first_node_data);
+               break;
+            }
 
             cache.update(&child_item_set, first_node_data);
+
             let first_split_error = first_node_data.node_error;
             its_op.backtrack();
 
@@ -204,12 +234,23 @@ impl<'a> DL85 {
 
                 let remaining_ub = child_upper_bound - first_split_error;
                 child_item_set.sort_unstable();
-                let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), remaining_ub, depth + 1, max_depth, min_support, max_error, second_node_data, instant, time_limit);
+                let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), remaining_ub, depth + 1, max_depth, min_support, max_error, second_node_data, instant, time_limit, reload_cache);
 
                 cache = data.0;
                 its_op = data.1;
                 second_node_data = data.2;
-
+                second_node_data.is_explored = true;
+                if time_limit > 0. {
+                    if data.3.elapsed().as_secs() as f64 > time_limit {
+                        out_of_time = true;
+                    }
+                }
+                if out_of_time{
+                    parent_node_data.is_explored = false;
+                    second_node_data.is_explored = false;
+                    cache.update(&child_item_set, second_node_data);
+                    break;
+                }
                 cache.update(&child_item_set, second_node_data);
                 let second_split_error = second_node_data.node_error;
                 its_op.backtrack();
@@ -225,33 +266,71 @@ impl<'a> DL85 {
                     cache.update(&current_itemset, parent_node_data);
                 }
             } else {
+                if time_limit > 0. {
+                    if data.3.elapsed().as_secs() as f64 > time_limit {
+                        out_of_time = true;
+                    }
+                }
+                if out_of_time{
+                    parent_node_data.is_explored = false;
+                    break;
+                }
+
                 continue;
             }
         }
-
+        // if out_of_time {
+        //     cache.set_node_exploration_status(&current_itemset, false);
+        // }
+        //cache.set_node_exploration_status(&current_itemset, true);
         cache.is_done = true;
         (cache, its_op, parent_node_data, instant)
     }
 
 
-    fn check_if_stop_condition_reached(mut node: Node, upper_bond: f64, min_support: u64, current_support: u64, depth: u64, max_depth: u64) -> (bool, Node) { // TODO: Here we check if the node already exists. If not we create new one and return his address
+    fn check_if_stop_condition_reached(mut node: Node, upper_bond: f64, min_support: u64, current_support: u64, depth: u64, max_depth: u64, out_of_time : bool, reload_cache: bool) -> (bool, Node) { // TODO: Here we check if the node already exists. If not we create new one and return his address
+
+        unsafe {
+            CAME_HERE += 1;
+        }
+
+        if out_of_time {
+            node.node_error = node.leaf_error;
+            node.is_explored = false;
+            return (true, node);
+        }
 
 
+        if reload_cache {
+            //println!("{:?}", node);
+            if node.is_explored {
+                unsafe {
+                    NODE_EXP += 1;
+                }
+                //println!("Explored");
+                return (true, node);
+        }
+            //println!("Not explored");
+            node.node_error = <f64>::MAX;
+            //return (false, node);
+        }
 
         if depth == max_depth || current_support < (2 * min_support) as u64 {
             node.node_error = node.leaf_error;
             node.is_leaf = true;
-            node.is_new = false;
+            node.is_explored = true;
             return (true, node);
         }
         if upper_bond <= node.lower_bound {
+            node.node_error = node.leaf_error;
+            node.is_explored = true;
             return (true, node);
         }
 
         if node.leaf_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }) {
             node.node_error = node.leaf_error;
             node.is_leaf = true;
-            node.is_new = false;
+            node.is_explored = true;
             return (true, node);
         }
 
@@ -265,12 +344,11 @@ impl<'a> DL85 {
         let mut node = cache_ref.insert(&its);
 
 
-        if node.is_new {
+        if !node.data.is_explored {
             let error = its_op.leaf_misclassication_error();
             node.data = Node::new(item.0, depth);
             node.data.leaf_error = error.0 as f64;
             node.data.max_class = error.1;
-            node.is_new = false;
         }
         node.data
     }
