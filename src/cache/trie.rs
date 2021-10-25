@@ -105,6 +105,13 @@ impl Trie {
         true
     }
 
+    pub fn set_node_exploration_status(&mut self, itemset: &Vec<Item>, status: bool) -> bool {
+        let node = self.get(itemset);
+        let node_ref = node.unwrap();
+        node_ref.data.is_explored = status;
+        true
+    }
+
     pub fn gen_final_tree(&mut self) {
         if !self.is_done {
             println!("The Cache is not fully loaded. This method should be called at the end of the search");
