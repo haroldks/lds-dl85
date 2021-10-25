@@ -65,7 +65,7 @@ fn get_sub_tree(parent: Vec<Item>, mut cache: Trie) -> (Trie, Tree) {
 }
 
 
-pub fn predict(transactions: Vec<BitVec>, mut tree: Tree) -> Vec<usize> {
+pub fn predict(transactions: Vec<BitVec>, tree: Tree) -> Vec<usize> {
     let mut y_pred: Vec<usize> = Vec::new();
     for transaction in transactions {
         let mut clone_tree = tree.clone();
@@ -95,7 +95,7 @@ pub fn get_data_as_transactions_and_target(filename: String) -> Result<(Vec<BitV
             match j {
                 0 => { target.push(l.parse::<usize>().unwrap()) }
                 _ => {
-                    inputs[i].set((j - 1), l == &"1")
+                    inputs[i].set(j - 1, l == &"1")
                 }
             }
         }
@@ -119,7 +119,7 @@ pub fn accuracy(y_test: Vec<usize>, y_pred: Vec<usize>) -> f64{
 
     let mut equal = vec![];
     for i in 0..y_pred.len() {
-        equal.push((y_pred[i] == y_test[i]));
+        equal.push(y_pred[i] == y_test[i]);
     }
     equal.iter().filter(|x| **x).count() as f64 / y_pred.len() as f64
 }

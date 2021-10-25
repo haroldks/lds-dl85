@@ -29,11 +29,6 @@ fn main() { // TODO: Unit tests
         process::exit(1);
     });
 
-    let a: u64 = 8;
-    let mask = 1u64 << 3u64;
-    println!("{:b}", a ^ mask );
-    println!("{:b}", a ^ mask ^ mask);
-
     println!("Everything is ok..\n");
     let filename = config.filename;
 
@@ -62,6 +57,7 @@ fn main() { // TODO: Unit tests
     let max_error = config.max_error;
     let time_limit = config.time_limit;
     let error_save_time = config.error_save_time;
+
 
 
     let mut algo = DL85::new(its.get_infos());
