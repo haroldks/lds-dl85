@@ -100,13 +100,29 @@ impl ItemsetBitvector for ItemsetOps<'_> {
     fn get_current(&self) -> Vec<Item> {
         self.current.clone()
     }
+
+    fn get_nclasses(&self) -> usize {
+        self.data.nclasses
+    }
+
+    fn temp_classes_cover(&mut self, second_its: &Item) -> Vec<usize> {
+        self.current.push(*second_its);
+        self.updated = false;
+        self.support = None;
+        self.update_mask(second_its);
+        self.mask_stack.push(self.mask.as_ref().unwrap().clone());
+        let cover = self.classes_cover();
+        self.backtrack();
+        cover
+    }
+
 }
 
 #[allow(dead_code)]
 impl<'a> ItemsetOps<'a> {
     pub fn new(data: &Data) -> ItemsetOps {
         let ntransactions = data.ntransactions;
-        let mut mask = Option::from(BitVec::from_elem(ntransactions, true));
+        let mask = Option::from(BitVec::from_elem(ntransactions, true));
         let cloned_mask = mask.as_ref().unwrap().clone();
         ItemsetOps { current: vec![], data, support: None, frequency: None, mask, mask_stack: vec![cloned_mask], ntransactions, updated: false }
     }
