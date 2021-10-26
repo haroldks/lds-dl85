@@ -1,0 +1,20 @@
+pipelines:
+  default:
+    - step:
+        caches:
+          - cargo
+          - rust-target
+        script:
+          - echo "Build project"                    ; cargo build --release
+  branches:
+    master:
+      - step:
+          caches:
+            - cargo
+            - rust-target
+          script:
+            - echo "Build project"                    ; cargo build --release
+definitions:
+  caches:
+    cargo: /usr/local/cargo # CARGO_HOME
+    rust-target: $BITBUCKET_CLONE_DIR/target
