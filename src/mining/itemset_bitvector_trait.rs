@@ -8,6 +8,8 @@ pub trait ItemsetBitvector {
 
     fn backtrack(&mut self);
 
+    fn reset(&mut self);
+
     fn support(&mut self) -> usize;
 
     fn classes_cover(&mut self) -> Vec<usize>;

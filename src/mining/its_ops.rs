@@ -46,6 +46,16 @@ impl ItemsetBitvector for ItemsetOps<'_> {
         self.support();
     }
 
+    fn reset(&mut self) {
+        self.gen_new_mask();
+        let cloned_mask = self.mask.as_ref().unwrap().clone();
+        self.mask_stack = vec![cloned_mask];
+        self.support = None;
+        self.frequency = None;
+        self.updated = false;
+        self.current = vec![];
+    }
+
     fn support(&mut self) -> usize {
         return if self.support.is_some() && self.updated {
             self.support.unwrap()

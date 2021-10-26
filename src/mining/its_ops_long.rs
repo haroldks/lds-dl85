@@ -47,7 +47,6 @@ impl ItemsetBitvector for ItemsetOpsLong<'_> {
         let cover = self.classes_cover();
         self.backtrack();
         cover
-
     }
 
     fn backtrack(&mut self) {
@@ -119,6 +118,16 @@ impl ItemsetBitvector for ItemsetOpsLong<'_> {
 
     fn get_nclasses(&self) -> usize {
         self.data.nclasses
+    }
+
+    fn reset(&mut self) {
+        self.gen_new_mask();
+        let cloned_mask = self.mask.as_ref().unwrap().clone();
+        self.mask_stack = vec![cloned_mask];
+        self.support = None;
+        self.frequency = None;
+        self.updated = false;
+        self.current = vec![];
     }
 }
 
@@ -207,7 +216,4 @@ impl<'a> ItemsetOpsLong<'a> {
         }
         self.frequency.unwrap()
     }
-
-
-
 }
