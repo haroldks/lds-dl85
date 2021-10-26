@@ -8,7 +8,7 @@ pipelines:
         script:
           - echo "Build project"                    ; cargo build --release
   branches:
-    master:
+    dev:
       - step:
           caches:
             - cargo
