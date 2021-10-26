@@ -63,12 +63,12 @@ fn main() { // TODO: Unit tests
     let mut algo = DL85::new(its.get_infos());
 
     print!("We start the run.. \n");
-    let output = algo.run(min_support, max_depth, max_error, 5., error_save_time, itemset_bitset_operations, cache, false);
+    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, false, true,false, itemset_bitset_operations, cache);
     let itemset_bitset_operations = ItemsetOpsLong::new(&datac);
     println!("Cache Size : {:?} Nodes", output.0.cachesize);
     //println!("Cache Size : {:?} Nodes", output.0.root);
-    let mut algo = DL85::new(its.get_infos());
-    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, itemset_bitset_operations, output.0, true);
+    //let mut algo = DL85::new(its.get_infos());
+    //let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, true, false, true, itemset_bitset_operations, output.0);
     println!("Cache Size : {:?} Nodes", output.0.cachesize);
     let data = get_solution_tree(output.0);
     let dd = get_data_as_transactions_and_target(filename.clone()).unwrap();
