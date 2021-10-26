@@ -19,12 +19,12 @@ impl Config {
         let filename = args[1].clone();
 
         let min_support = args[2].clone().parse::<u64>().unwrap();
-        if min_support <= 1 {
+        if min_support < 1 {
            return  Err("Invalid min support. Min support should be greater than 0.");
         }
 
         let max_depth = args[3].clone().parse::<u64>().unwrap();
-        if max_depth <= 1 {
+        if max_depth < 1 {
             return Err("Invalid max depth. Max Depth should be greater than 1.");
         }
 
