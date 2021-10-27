@@ -66,13 +66,14 @@ fn main() { // TODO: Unit tests
     let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, false, true,false, itemset_bitset_operations, cache);
     let itemset_bitset_operations = ItemsetOpsLong::new(&datac);
     println!("Cache Size : {:?} Nodes", output.0.cachesize);
+    println!("Tree Error : {:?} ", output.0.root.data.node_error);
     //println!("Cache Size : {:?} Nodes", output.0.root);
     //let mut algo = DL85::new(its.get_infos());
     //let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, true, false, true, itemset_bitset_operations, output.0);
-    println!("Cache Size : {:?} Nodes", output.0.cachesize);
     let data = get_solution_tree(output.0);
     let dd = get_data_as_transactions_and_target(filename.clone()).unwrap();
     println!("Tree: {:?}", data.0);
+    println!("Depth: {:?}", data.2);
     let y_pred = predict(dd.0.clone(), data.0.clone());
 
     println!("Accuracy: {:?}", accuracy(dd.1.clone(), y_pred.clone()));
