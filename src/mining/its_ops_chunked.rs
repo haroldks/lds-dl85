@@ -40,6 +40,17 @@ impl ItemsetBitvector for ItemsetOpsChunked<'_> {
         support
     }
 
+    fn temp_classes_cover(&mut self, second_its: &Item) -> Vec<usize> {
+        self.current.push(*second_its);
+        self.updated = false;
+        self.support = None;
+        self.update_mask(second_its);
+        self.mask_stack.push(self.mask.as_ref().unwrap().clone());
+        let cover = self.classes_cover();
+        self.backtrack();
+        cover
+    }
+
     fn backtrack(&mut self) {
         self.mask_stack.pop();
         self.current.pop();
@@ -47,6 +58,16 @@ impl ItemsetBitvector for ItemsetOpsChunked<'_> {
         self.updated = false;
         self.support = None;
         self.support();
+    }
+
+    fn reset(&mut self) {
+        self.gen_new_mask();
+        let cloned_mask = self.mask.as_ref().unwrap().clone();
+        self.mask_stack = vec![cloned_mask];
+        self.support = None;
+        self.frequency = None;
+        self.updated = false;
+        self.current = vec![];
     }
 
     fn support(&mut self) -> usize {
@@ -106,6 +127,12 @@ impl ItemsetBitvector for ItemsetOpsChunked<'_> {
     fn get_current(&self) -> Vec<Item> {
         self.current.clone()
     }
+
+    fn get_nclasses(&self) -> usize {
+        self.data.nclasses
+    }
+
+
 }
 
 

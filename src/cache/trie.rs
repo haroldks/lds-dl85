@@ -18,11 +18,17 @@ impl TrieEdges {
 
 impl fmt::Display for TrieEdges {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        writeln!(f, "{{  ");
+        if let Err(e) = writeln!(f, "{{  "){
+            println!("Writing error: {}", e.to_string());
+        };
         for i in &self.edges {
-            write!(f, "\t{}", i);
+            if let Err(e) = write!(f, "\t{}", i){
+                println!("Writing error: {}", e.to_string());
+            };
         }
-        write!(f, " }}");
+        if let Err(e) = write!(f, " }}"){
+            println!("Writing error: {}", e.to_string());
+        };
         Ok(())
     }
 }
@@ -102,6 +108,13 @@ impl Trie {
         let node_ref = node.unwrap();
         node_ref.is_new = false;
         node_ref.data = node_data;
+        true
+    }
+
+    pub fn set_node_exploration_status(&mut self, itemset: &Vec<Item>, status: bool) -> bool {
+        let node = self.get(itemset);
+        let node_ref = node.unwrap();
+        node_ref.data.is_explored = status;
         true
     }
 

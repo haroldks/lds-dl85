@@ -38,6 +38,17 @@ impl ItemsetBitvector for ItemsetOpsLong<'_> {
         support
     }
 
+    fn temp_classes_cover(&mut self, second_its: &Item) -> Vec<usize> {
+        self.current.push(*second_its);
+        self.updated = false;
+        self.support = None;
+        self.update_mask(second_its);
+        self.mask_stack.push(self.mask.as_ref().unwrap().clone());
+        let cover = self.classes_cover();
+        self.backtrack();
+        cover
+    }
+
     fn backtrack(&mut self) {
         self.mask_stack.pop();
         self.current.pop();
@@ -67,7 +78,7 @@ impl ItemsetBitvector for ItemsetOpsLong<'_> {
         for i in 0..self.data.nclasses {
             let mut cloned_mask = self.mask.clone().unwrap();
             for j in 0..self.nchunks {
-                let mut mask_chunk = &mut cloned_mask[j];
+                let mask_chunk = &mut cloned_mask[j];
                 let target_chunk = &self.data.target[i][j];
                 *mask_chunk = *mask_chunk & *target_chunk;
             }
@@ -104,9 +115,23 @@ impl ItemsetBitvector for ItemsetOpsLong<'_> {
     fn get_current(&self) -> Vec<Item> {
         self.current.clone()
     }
+
+    fn get_nclasses(&self) -> usize {
+        self.data.nclasses
+    }
+
+    fn reset(&mut self) {
+        self.gen_new_mask();
+        let cloned_mask = self.mask.as_ref().unwrap().clone();
+        self.mask_stack = vec![cloned_mask];
+        self.support = None;
+        self.frequency = None;
+        self.updated = false;
+        self.current = vec![];
+    }
 }
 
-
+#[allow(dead_code)]
 impl<'a> ItemsetOpsLong<'a> {
     pub fn new(data: &DataLong) -> ItemsetOpsLong {
         let ntransactions = data.ntransactions;
@@ -117,7 +142,7 @@ impl<'a> ItemsetOpsLong<'a> {
             _ => { nchunks * 64 - ntransactions }
         };
 
-        let mut first_chunk = &mut mask.as_mut().unwrap()[0];
+        let first_chunk = &mut mask.as_mut().unwrap()[0];
         for i in (dead_bits..64).rev() {
             let int_mask = 1u64 << i;
             *first_chunk = *first_chunk & !int_mask;
@@ -132,7 +157,7 @@ impl<'a> ItemsetOpsLong<'a> {
         let mut item_vec = self.data.data[item.0].clone();
 
         for i in 0..self.nchunks {
-            let mut a = &mut mask[i];
+            let a = &mut mask[i];
             let b = &mut item_vec[i];
             if !item.1 {
                 *a = *a & !*b;
@@ -145,18 +170,25 @@ impl<'a> ItemsetOpsLong<'a> {
     }
 
     fn gen_new_mask(&mut self) {
-        self.mask = Option::from(vec![<u64>::MAX; self.nchunks]);
+        self.mask = self.gen_not_self_mask();
+    }
+
+
+    fn gen_not_self_mask(&self) -> Option<Vec<u64>> {
+        let mut mask = Option::from(vec![<u64>::MAX; self.nchunks]);
         let dead_bits = 64 - match self.ntransactions % 64 {
             0 => { 0 }
             _ => { self.nchunks * 64 - self.ntransactions }
         };
 
-        let mut first_chunk = &mut self.mask.as_mut().unwrap()[0];
+        let first_chunk = &mut mask.as_mut().unwrap()[0];
         for i in (dead_bits..64).rev() {
             let int_mask = 1u64 << i;
             *first_chunk = *first_chunk & !int_mask;
         }
+        mask
     }
+
 
     fn compute_support_from_mask(&mut self) -> usize {
         if self.mask.is_none() {

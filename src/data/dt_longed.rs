@@ -2,8 +2,6 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error};
 
-use substring::Substring;
-
 pub struct DataLong {
     pub filename: String,
     pub ntransactions: usize,
@@ -54,7 +52,7 @@ impl DataLong {
                 actual_chunk -= 1;
                 counter = 0;
             }
-            let mut line = line.split_ascii_whitespace().collect::<Vec<&str>>();
+            let line = line.split_ascii_whitespace().collect::<Vec<&str>>();
             for (j, l) in line.iter().enumerate() {
                 match j {
                     0 => { target.push(l.parse::<usize>().unwrap()) }
