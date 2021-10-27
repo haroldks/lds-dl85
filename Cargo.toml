@@ -7,7 +7,6 @@ edition = "2018"
 
 [dependencies]
 bit-vec = "0.6"
-substring = "1.4.5"
 float-cmp = "0.9.0"
 clokwerk = "0.4.0-rc1"
 plotters = "0.3.1"
