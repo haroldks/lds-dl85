@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error};
 use bit_vec::BitVec;
@@ -5,26 +6,26 @@ use crate::cache::trie::Trie;
 use crate::mining::types_def::Item;
 use crate::solution::tree::Tree;
 
-pub fn get_solution_tree(cache: Trie) -> (Tree, Trie) {
+pub fn get_solution_tree(cache: Trie) -> (Tree, Trie, u64) {
     if !cache.is_done || cache.root.data.test == <usize>::MAX {
-        (Tree::new(<usize>::MAX), cache)
+        (Tree::new(<usize>::MAX), cache, 0)
     } else {
         let best_attribute = cache.root.data.test;
         let mut tree = Tree::new(best_attribute);
         tree.error = Option::from(cache.root.data.node_error);
         let branches = vec![vec![(best_attribute, false)], vec![(best_attribute, true)]];
 
-        let data = get_sub_tree(branches[0].clone(), cache);
+        let data = get_sub_tree(branches[0].clone(), cache, 0);
         tree.left.push(data.1);
 
-        let data = get_sub_tree(branches[1].clone(), data.0);
+        let data = get_sub_tree(branches[1].clone(), data.0, 0);
         tree.right.push(data.1);
 
-        (tree, data.0)
+        (tree, data.0, data.2 + 1)
     }
 }
 
-fn get_sub_tree(parent: Vec<Item>, mut cache: Trie) -> (Trie, Tree) {
+fn get_sub_tree(parent: Vec<Item>, mut cache: Trie, depth: u64) -> (Trie, Tree, u64) {
     let parent_node = cache.get(&parent).unwrap();
 
     let len = parent.len();
@@ -36,7 +37,7 @@ fn get_sub_tree(parent: Vec<Item>, mut cache: Trie) -> (Trie, Tree) {
         final_tree.is_leaf = true;
         final_tree.max_class = parent_node_data.max_class;
         final_tree.error = Option::from(parent_node_data.node_error);
-        (cache, final_tree)
+        (cache, final_tree, depth)
     } else {
         let mut item_set_vec = parent.clone();
         let checker = item_set_vec.iter().filter(|it| it.0 == parent_node_data.test).collect::<Vec<&Item>>();
@@ -44,22 +45,25 @@ fn get_sub_tree(parent: Vec<Item>, mut cache: Trie) -> (Trie, Tree) {
             final_tree.is_leaf = true;
             final_tree.max_class = parent_node_data.max_class;
             final_tree.error = Option::from(parent_node_data.node_error);
-            (cache, final_tree)
+            (cache, final_tree, depth)
         } else {
             item_set_vec.push((parent_node_data.test, false)); //left
             item_set_vec.sort_unstable();
 
-            let data = get_sub_tree(item_set_vec, cache);
+            let data = get_sub_tree(item_set_vec, cache, depth);
             final_tree.left.push(data.1);
+
+            let curr_depth = data.2 + 1;
 
             let mut item_set_vec = parent.clone();
             item_set_vec.push((parent_node_data.test, true)); //right
             item_set_vec.sort_unstable();
 
 
-            let data = get_sub_tree(item_set_vec, data.0);
+            let data = get_sub_tree(item_set_vec, data.0, depth);
             final_tree.right.push(data.1);
-            (data.0, final_tree)
+
+            (data.0, final_tree, max(data.2+1, curr_depth))
         }
     }
 }
