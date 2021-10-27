@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::time::Duration;
 use std::time::Instant;
 
@@ -149,31 +150,32 @@ impl<'a> DL85 {
         } else {
 
 
-            let len = candidates_list.len() - 1;
-            let mut max_discrepancy = len;
-            for i in 1..max_depth {
-                max_discrepancy += len - i as usize;
-            }
+            let max_discrepancy = candidates_list.len() - 1;
+            // let mut max_discrepancy = len;
+            // for i in 1..max_depth {
+            //     max_discrepancy += len - i as usize;
+            // }
             println!("Max discrepancy: {}", max_discrepancy ); // TODO: Change max discrepancy handling
             let empty_itemset: Vec<Item> = vec![];
             let mut reload_cache =  false;
             let now = Instant::now();
             let total = Instant::now();
-            println!("Starting Discrepancy {}", 0);
+            // println!("Starting Discrepancy {}", 0);
             let mut data= DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), max_error, 0, max_depth, use_discrepancy, Some(0), Some(0), min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache);
-            println!("Duration:  {:?} milliseconds for discrepancy: {}", data.3.elapsed().as_millis(), 0);
-            println!("Cache size for discrepancy {},  :  {}",  0, data.0.cachesize);
+            // println!("Duration:  {:?} milliseconds for discrepancy: {}", data.3.elapsed().as_millis(), 0);
+            // println!("Cache size for discrepancy {},  :  {}",  0, data.0.cachesize);
 
             reload_cache = true;
             for discrepancy in 1..max_discrepancy+1{
                 cache = data.0;
+                let new_upper_bound = cache.root.data.node_error; // New way to prune more.
                 its_ops =  data.1;
                 its_ops.reset();
-                println!("Starting Discrepancy {}", discrepancy);
+                // println!("Starting Discrepancy {}", discrepancy);
                 let now = Instant::now();
-                data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), max_error, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache);
-                println!("Duration:  {:?} milliseconds for discrepancy: {}", data.3.elapsed().as_millis(), discrepancy);
-                println!("Cache size for discrepancy {},  :  {}",  discrepancy, data.0.cachesize);
+                data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache);
+                // println!("Duration:  {:?} milliseconds for discrepancy: {}", data.3.elapsed().as_millis(), discrepancy);
+                // println!("Cache size for discrepancy {},  :  {}",  discrepancy, data.0.cachesize);
             }
             println!("Total Duration:  {:?} milliseconds for the LDS", total.elapsed().as_millis());
 
@@ -196,7 +198,7 @@ impl<'a> DL85 {
     }
 
 
-    fn recursion<T: ItemsetBitvector>(mut cache: Trie, mut its_op: T, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, use_discrepancy: bool, current_discrepancy: Option<u64>, max_discrepancy: Option<u64>, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64, use_info_gain: bool, reload_cache: bool) -> (Trie, T, Node, Instant) {
+    fn recursion<T: ItemsetBitvector>(mut cache: Trie, mut its_op: T, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, use_discrepancy: bool, current_discrepancy: Option<u64>, mut max_discrepancy: Option<u64>, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64, use_info_gain: bool, reload_cache: bool) -> (Trie, T, Node, Instant) {
         unsafe {
             CURRENT_ERROR = cache.root.data.node_error;
         }
@@ -251,8 +253,14 @@ impl<'a> DL85 {
 
             let child_discrepancy = match use_discrepancy {
                 false => { None }
-                _ => { Some(current_discrepancy.unwrap() + idx as u64)}
+                _ => {Some(idx as u64)}
             };
+
+            if use_discrepancy{
+                max_discrepancy = min(max_discrepancy, Some((new_candidates.len() - 1) as u64));
+            }
+
+
 
             if use_discrepancy && child_discrepancy.unwrap() > max_discrepancy.unwrap() {
                 break;
