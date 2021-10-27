@@ -158,8 +158,7 @@ impl<'a> DL85 {
             println!("Max discrepancy: {}", max_discrepancy ); // TODO: Change max discrepancy handling
             let empty_itemset: Vec<Item> = vec![];
             let mut reload_cache =  false;
-            let now = Instant::now();
-            let total = Instant::now();
+            let mut now = Instant::now();
             // println!("Starting Discrepancy {}", 0);
             let mut data= DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), max_error, 0, max_depth, use_discrepancy, Some(0), Some(0), min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache);
             // println!("Duration:  {:?} milliseconds for discrepancy: {}", data.3.elapsed().as_millis(), 0);
@@ -172,12 +171,12 @@ impl<'a> DL85 {
                 its_ops =  data.1;
                 its_ops.reset();
                 // println!("Starting Discrepancy {}", discrepancy);
-                let now = Instant::now();
+                now = data.3;
                 data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache);
                 // println!("Duration:  {:?} milliseconds for discrepancy: {}", data.3.elapsed().as_millis(), discrepancy);
                 // println!("Cache size for discrepancy {},  :  {}",  discrepancy, data.0.cachesize);
             }
-            println!("Total Duration:  {:?} milliseconds for the LDS", total.elapsed().as_millis());
+            println!("Duration:  {:?} milliseconds for discrepancy Search", data.3.elapsed().as_millis(),);
 
 
 
