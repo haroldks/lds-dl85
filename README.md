@@ -13,21 +13,20 @@
 - [x] Move parameter from constructor to the run algo
 - [x] Change to use environment parameters
 - [x] Implement Generic type and common trait for its for the DL85 struct
+- [X] Clean DL8.5 and move its_op and data outside it
+- [X] Implement warm start
+- [X] Sort successor by information gain or other
+- [X] Implement Limited Discrepancy Search
+- [X] Create a main file to use from command line
 - [ ] Use clap crate to allow default configuration for the algorithm
-- [ ] Sort successor by information gain or other
-- [ ] Implement Limited Discrepancy Search
 - [ ] Fix Useless tree split when the error is done on the same class in each split
 - [ ] Test all implementations to see the fastest (Chunked, Not chunked)
 - [ ] Check Memory usage with C++ implementation
-- [ ] Merge tree node when fake leaves is created ?
 - [ ] Fix warnings
-- [ ] Replace Vec to slices for the ItsOps implementations ?
+- [ ] Replace Vec to slices for the ItsOps implementations ? (Not necessary)
 - [ ] Implement lower bound to reduce the space search
 - [ ] Implement the valid words and limit trick to reduce computation
-- [ ] Allow DL8.5 main class to use generic types for dataset and its_op
-- [ ] Clean DL8.5 and move its_op and data outside it
-- [ ] Implement warm start
-- [ ] Create a main file to use from command line
+
 - [ ] Visualization of the Tree
 
 ### Topics
