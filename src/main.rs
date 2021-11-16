@@ -63,7 +63,7 @@ fn main() { // TODO: Unit tests
     let mut algo = DL85::new(its.get_infos());
 
     print!("We start the run.. \n");
-    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, false, true,false, itemset_bitset_operations, cache);
+    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, true, false,false, itemset_bitset_operations, cache);
     let itemset_bitset_operations = ItemsetOpsLong::new(&datac);
     println!("Cache Size : {:?} Nodes", output.0.cachesize);
     println!("Tree Error : {:?} ", output.0.root.data.node_error);

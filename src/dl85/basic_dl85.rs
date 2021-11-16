@@ -115,7 +115,6 @@ impl<'a> DL85 {
             unsafe {
                 scheduler.every((error_save_time as u32).seconds()).run(move || {
                     let temp_error = CURRENT_ERROR;
-                    println!("Errorrr:  {}", temp_error);
                     ERRORS.push(temp_error as f32);
                 });
             };
@@ -139,7 +138,7 @@ impl<'a> DL85 {
             }
             data
         } else {
-            let max_discrepancy = candidates_list.len() - 1;
+            let max_discrepancy = candidates_list.len();
             println!("Max discrepancy: {}", max_discrepancy); // TODO: Change max discrepancy handling
             let empty_itemset: Vec<Item> = vec![];
             let mut reload_cache = false;
@@ -149,17 +148,21 @@ impl<'a> DL85 {
             reload_cache = true;
 
             for discrepancy in 1..max_discrepancy + 1 {
+                println!("Current discrepancy: {}", discrepancy);
                 cache = data.0;
                 let new_parent_node = cache.root.data.clone();
                 let new_upper_bound = cache.root.data.node_error; // New way to prune more.
                 its_ops = data.1;
                 its_ops.reset();
                 now = data.3;
-                data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, max_error, new_parent_node, now, time_limit, use_info_gain, reload_cache);
-                if now.elapsed().as_secs() as f64 > time_limit {
-                    println!("Finished at discrepancy: {}", discrepancy);
-                    break;
+                data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, new_upper_bound, new_parent_node, now, time_limit, use_info_gain, reload_cache);
+                if time_limit > 0.{
+                    if now.elapsed().as_secs() as f64 > time_limit {
+                        println!("Finished at discrepancy: {}", discrepancy);
+                        break;
+                    }
                 }
+
             }
             println!("Duration:  {:?} milliseconds for discrepancy Search", data.3.elapsed().as_millis());
 
@@ -220,7 +223,7 @@ impl<'a> DL85 {
             };
 
             if use_discrepancy {
-                max_discrepancy = min(max_discrepancy, Some((new_candidates.len() - 1) as u64));
+                max_discrepancy = min(max_discrepancy, Some((new_candidates.len()) as u64));
             }
 
             if use_discrepancy && child_discrepancy.unwrap() > max_discrepancy.unwrap() {
@@ -245,7 +248,7 @@ impl<'a> DL85 {
             let out_of_time = time_bundle.0;
             let instant = time_bundle.1;
 
-            if out_of_time {
+            if use_discrepancy && out_of_time {
                 parent_node_data.is_explored = false;
                 parent_node_data.node_error = parent_node_data.leaf_error;
                 return (cache, its_op, parent_node_data, instant);
@@ -274,7 +277,7 @@ impl<'a> DL85 {
                 let out_of_time = time_bundle.0;
                 let instant = time_bundle.1;
 
-                if out_of_time {
+                if use_discrepancy && out_of_time {
                     parent_node_data.is_explored = false;
                     parent_node_data.node_error = parent_node_data.leaf_error;
                     return (cache, its_op, parent_node_data, instant);
@@ -296,7 +299,7 @@ impl<'a> DL85 {
                 let out_of_time = time_bundle.0;
                 let instant = time_bundle.1;
 
-                if out_of_time {
+                if use_discrepancy && out_of_time {
                     parent_node_data.is_explored = false;
                     parent_node_data.node_error = parent_node_data.leaf_error;
                     return (cache, its_op, parent_node_data, instant);
@@ -336,6 +339,9 @@ impl<'a> DL85 {
             if current_discrepancy.is_some() {
                 if (current_discrepancy.unwrap() > max_discrepancy.unwrap()) && node.is_explored {
                     node.current_discrepancy = max_discrepancy;
+                    return (true, node);
+                }
+                if node.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }){
                     return (true, node);
                 }
             } else {
