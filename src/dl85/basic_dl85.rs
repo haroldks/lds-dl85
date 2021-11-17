@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use clokwerk::{Scheduler, TimeUnits};
 use float_cmp::{ApproxEq, F64Margin};
-use plotters::prelude::*;
+// use plotters::prelude::*;
 
 use crate::cache::trie::Trie;
 use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
@@ -15,52 +15,52 @@ static mut CURRENT_ERROR: f64 = 0.;
 static mut ERRORS: Vec<f32> = vec![];
 
 #[allow(unused_variables)]
-fn make_a_plot(array: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
-    let root = BitMapBackend::new("plotters-doc-data.png", (640, 480)).into_drawing_area();
-    let lol = array.iter().enumerate().map(|x| (x.0 as f32, *x.1)).collect::<Vec<(f32, f32)>>();
-
-    if let Err(e) = root.fill(&WHITE) {
-        println!("Writing error: {}", e.to_string());
-    };
-    let root = root.margin(10, 10, 10, 10);
-    // After this point, we should be able to draw construct a chart context
-    let mut chart = ChartBuilder::on(&root)
-        // Set the caption of the chart
-        .caption("Error Plot", ("sans-serif", 40).into_font())
-        // Set the size of the label region
-        .x_label_area_size(20)
-        .y_label_area_size(40)
-        // Finally attach a coordinate on the drawing area and make a chart context
-        .build_cartesian_2d(0f32..(lol.len() as f32), IntoLogRange::log_scale(170f32..<f32>::MAX))?;
-
-    // Then we can draw a mesh
-    chart
-        .configure_mesh()
-        // We can customize the maximum number of labels allowed for each axis
-        .x_labels(5)
-        .y_labels(5)
-        // We can also change the format of the label text
-        .y_label_formatter(&|x| format!("{:.3}", x))
-        .draw()?;
-
-    // And we can draw something in the drawing area
-    chart.draw_series(LineSeries::new(
-        lol.clone(),
-        &RED,
-    ))?;
-    // Similarly, we can draw point series
-    // chart.draw_series(PointSeries::of_element(
-    //     lol,
-    //     5,
-    //     &RED,
-    //     &|c, s, st| {
-    //         return EmptyElement::at(c)    // We want to construct a composed element on-the-fly
-    //             + Circle::new((0,0),s,st.filled()) // At this point, the new pixel coordinate is established
-    //             + Text::new(format!("{:?}", c), (10, 0), ("sans-serif", 10).into_font());
-    //     },
-    // ))?;
-    Ok(())
-}
+// fn make_a_plot(array: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
+//     let root = BitMapBackend::new("plotters-doc-data.png", (640, 480)).into_drawing_area();
+//     let lol = array.iter().enumerate().map(|x| (x.0 as f32, *x.1)).collect::<Vec<(f32, f32)>>();
+//
+//     if let Err(e) = root.fill(&WHITE) {
+//         println!("Writing error: {}", e.to_string());
+//     };
+//     let root = root.margin(10, 10, 10, 10);
+//     // After this point, we should be able to draw construct a chart context
+//     let mut chart = ChartBuilder::on(&root)
+//         // Set the caption of the chart
+//         .caption("Error Plot", ("sans-serif", 40).into_font())
+//         // Set the size of the label region
+//         .x_label_area_size(20)
+//         .y_label_area_size(40)
+//         // Finally attach a coordinate on the drawing area and make a chart context
+//         .build_cartesian_2d(0f32..(lol.len() as f32), IntoLogRange::log_scale(170f32..<f32>::MAX))?;
+//
+//     // Then we can draw a mesh
+//     chart
+//         .configure_mesh()
+//         // We can customize the maximum number of labels allowed for each axis
+//         .x_labels(5)
+//         .y_labels(5)
+//         // We can also change the format of the label text
+//         .y_label_formatter(&|x| format!("{:.3}", x))
+//         .draw()?;
+//
+//     // And we can draw something in the drawing area
+//     chart.draw_series(LineSeries::new(
+//         lol.clone(),
+//         &RED,
+//     ))?;
+//     // Similarly, we can draw point series
+//     // chart.draw_series(PointSeries::of_element(
+//     //     lol,
+//     //     5,
+//     //     &RED,
+//     //     &|c, s, st| {
+//     //         return EmptyElement::at(c)    // We want to construct a composed element on-the-fly
+//     //             + Circle::new((0,0),s,st.filled()) // At this point, the new pixel coordinate is established
+//     //             + Text::new(format!("{:?}", c), (10, 0), ("sans-serif", 10).into_font());
+//     //     },
+//     // ))?;
+//     Ok(())
+// }
 
 
 #[allow(dead_code)]
@@ -131,9 +131,9 @@ impl<'a> DL85 {
                 //thread_handle.stop();
                 unsafe {
                     println!("Errors for each {} seconds : {:?}", error_save_time, ERRORS);
-                    if let Err(e) = make_a_plot(ERRORS.clone()) {
-                        println!("Writing error: {}", e.to_string());
-                    };
+                    // if let Err(e) = make_a_plot(ERRORS.clone()) {
+                    //     println!("Writing error: {}", e.to_string());
+                    // };
                 }
             }
             data
@@ -170,9 +170,9 @@ impl<'a> DL85 {
                 //thread_handle.stop();
                 unsafe {
                     println!("Errors for each {} seconds : {:?}", error_save_time, ERRORS);
-                    if let Err(e) = make_a_plot(ERRORS.clone()) {
-                        println!("Writing error: {}", e.to_string());
-                    };
+                    // if let Err(e) = make_a_plot(ERRORS.clone()) {
+                    //     println!("Writing error: {}", e.to_string());
+                    // };
                 }
             }
             data
