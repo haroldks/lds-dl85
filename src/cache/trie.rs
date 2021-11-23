@@ -59,13 +59,14 @@ impl TrieNode {
 pub struct Trie {
     pub root: TrieNode,
     pub cachesize: u64,
+    pub max_cachesize: u64,
     pub is_done: bool,
 }
 
 #[allow(dead_code)]
 impl Trie {
     pub fn new() -> Trie {
-        Trie { root: TrieNode::new((usize::MAX, false)), cachesize: 0, is_done: false }
+        Trie { root: TrieNode::new((usize::MAX, false)), cachesize: 0, max_cachesize: 0, is_done: false }
     }
 
     pub fn get(&mut self, key: &Vec<Item>) -> Option<&mut TrieNode> {
@@ -123,4 +124,9 @@ impl Trie {
             println!("The Cache is not fully loaded. This method should be called at the end of the search");
         }
     }
+
+    pub fn update_cache_size(&mut self, new_size: u64){
+        self.max_cachesize = new_size;
+    }
+
 }

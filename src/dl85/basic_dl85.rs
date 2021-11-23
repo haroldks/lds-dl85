@@ -105,6 +105,11 @@ impl<'a> DL85 {
             }
         }
 
+        cache.update_cache_size(its_ops.max_cache_nodes(candidates_list.len() as u64, max_depth));
+
+        println!("Max Cache size before the run: {} Nodes.", cache.max_cachesize);
+
+
         if use_info_gain {
             let data = DL85::sort_by_information_gain(its_ops, candidates_list);
             its_ops = data.0;
