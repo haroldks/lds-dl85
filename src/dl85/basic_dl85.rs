@@ -4,12 +4,13 @@ use std::time::Instant;
 
 use clokwerk::{Scheduler, TimeUnits};
 use float_cmp::{ApproxEq, F64Margin};
-// use plotters::prelude::*;
 
 use crate::cache::trie::Trie;
 use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
 use crate::mining::types_def::{Attribute, Item};
 use crate::node::node::Node;
+
+// use plotters::prelude::*;
 
 static mut CURRENT_ERROR: f64 = 0.;
 static mut ERRORS: Vec<f32> = vec![];
@@ -61,8 +62,6 @@ static mut ERRORS: Vec<f32> = vec![];
 //     // ))?;
 //     Ok(())
 // }
-
-
 #[allow(dead_code)]
 pub struct DL85 {
     // TODO: Allow it to use generic types for differents ITS and DATA. Also solve the problem of the cache and its by removing them from the attributes'
@@ -91,7 +90,7 @@ impl<'a> DL85 {
         let mut scheduler = Scheduler::new(); // Scheduler for the error save time
 
         #[allow(unused_variables)]
-        let thread_handle; // The thread handler to stop
+            let thread_handle; // The thread handler to stop
 
         let mut candidates_list: Vec<Attribute> = Vec::new();
 
@@ -159,13 +158,12 @@ impl<'a> DL85 {
                 its_ops.reset();
                 now = data.3;
                 data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, new_upper_bound, new_parent_node, now, time_limit, use_info_gain, reload_cache);
-                if time_limit > 0.{
+                if time_limit > 0. {
                     if now.elapsed().as_secs() as f64 > time_limit {
                         println!("Finished at discrepancy: {}", discrepancy);
                         break;
                     }
                 }
-
             }
             println!("Duration:  {:?} milliseconds for discrepancy Search", data.3.elapsed().as_millis());
 
@@ -183,7 +181,7 @@ impl<'a> DL85 {
     }
 
 
-    fn recursion<T: ItemsetBitvector>(mut cache: Trie, mut its_op: T, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, use_discrepancy: bool, current_discrepancy: Option<u64>, mut max_discrepancy: Option<u64>, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64, use_info_gain: bool, reload_cache: bool) -> (Trie, T, Node, Instant) {
+    fn recursion<T: ItemsetBitvector>(mut cache: Trie, mut its_op: T, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, use_discrepancy: bool, current_discrepancy: Option<u64>, mut max_discrepancy: Option<u64>, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64, use_info_gain: bool, reload_cache: bool, original_candidates) -> (Trie, T, Node, Instant) {
         unsafe {
             CURRENT_ERROR = cache.root.data.node_error;
         }
@@ -220,23 +218,26 @@ impl<'a> DL85 {
             its_op = data.0;
             new_candidates = data.1;
         }
-        if depth > 0{
+        if depth > 0 {
             let past_attribute_position = next_candidates.iter().position(|x| *x == last_attribute).unwrap();
             let current_new_ = next_candidates.len() - past_attribute_position - 1;
             let mut new_cand_to_eval = 0;
-            if (expected_position) < new_candidates.len(){
-                new_cand_to_eval = new_candidates.len() - expected_position ;
+            if (expected_position) < new_candidates.len() {
+                new_cand_to_eval = new_candidates.len() - expected_position;
             }
-            let excluded_candidates_size = current_new_ -   new_cand_to_eval;
+            let excluded_candidates_size = current_new_ - new_cand_to_eval;
             if excluded_candidates_size > 0 {
-                let cache_size_to_remove = its_op.max_cache_nodes(excluded_candidates_size as u64, max_depth-depth);
+                let cache_size_to_remove = its_op.max_cache_nodes(excluded_candidates_size as u64, max_depth - depth);
                 cache.max_cachesize -= cache_size_to_remove;
             }
         }
-        //println!("Search space Exploration : {} / {}. As {:.7} % of the cache.", cache.cachesize, cache.max_cachesize, cache.cachesize as f64 * 100. /cache.max_cachesize as f64);
+        // println!("Search space Exploration : {} / {}. As {:.7} % of the cache.", cache.cachesize, cache.max_cachesize, cache.cachesize as f64 * 100. /cache.max_cachesize as f64);
 
 
         for (idx, attribute) in new_candidates.iter().enumerate() {
+            if depth > 0 {
+                println!("Atttr: {}", attribute);
+            }
             let child_discrepancy = match use_discrepancy {
                 false => { None }
                 _ => { Some(idx as u64) }
@@ -278,7 +279,7 @@ impl<'a> DL85 {
             let first_split_error = first_node_data.node_error;
             its_op.backtrack();
 
-            if first_node_data.node_error < upper_bound {
+            if first_node_data.node_error < child_upper_bound {
                 let _second_item_sup = its_op.intersection_cover(&items[1]);
                 let mut child_item_set = current_itemset.clone();
                 child_item_set.push(items[1]);
@@ -307,7 +308,11 @@ impl<'a> DL85 {
                 its_op.backtrack();
 
                 let feature_error = first_split_error + second_split_error;
-
+                if depth == 0 {
+                    // println!("Upb: {}", upper_bound);
+                    // println!("Curr Its: {:?}, ub: {}", current_itemset, child_upper_bound);
+                    // println!("fe : {}, first: {}, second: {}", feature_error, first_split_error, second_split_error);
+                }
                 if feature_error < child_upper_bound {
                     parent_node_data.node_error = feature_error;
                     parent_node_data.test = *attribute;
@@ -315,6 +320,14 @@ impl<'a> DL85 {
                     cache.update(&current_itemset, parent_node_data);
                 }
             } else {
+
+                let current_new_ = new_candidates.len() - idx - 1; // TODO: Use original set to reduce better according to past not next candidates
+                let node_to_remove = its_op.max_cache_nodes(current_new_ as u64, max_depth - depth - 1);
+                cache.max_cachesize -= node_to_remove;
+                println!("current new: {}", current_new_);
+                println!("Curr: {:?} last {},  depth = {}, maxDepth = {} to remove: {}", current_itemset, last_attribute, depth, max_depth, node_to_remove);
+
+
                 let time_bundle = DL85::check_time_out(instant, time_limit);
                 let out_of_time = time_bundle.0;
                 let instant = time_bundle.1;
@@ -361,7 +374,7 @@ impl<'a> DL85 {
                     node.current_discrepancy = max_discrepancy;
                     return (true, node);
                 }
-                if node.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }){
+                if node.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }) {
                     return (true, node);
                 }
             } else {
@@ -437,9 +450,8 @@ impl<'a> DL85 {
 
             if left_sup >= min_support as usize && right_sup >= min_support as usize {
                 next_candidates.push(*candidate);
-                i+=1;
+                i += 1;
             }
-
         }
         (next_candidates, expected_new_position)
     }
