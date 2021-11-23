@@ -108,8 +108,6 @@ impl<'a> DL85 {
         cache.update_cache_size(its_ops.max_cache_nodes(candidates_list.len() as u64, max_depth));
 
         println!("Max Cache size before the run: {} Nodes.", cache.max_cachesize);
-
-
         if use_info_gain {
             let data = DL85::sort_by_information_gain(its_ops, candidates_list);
             its_ops = data.0;
@@ -206,7 +204,9 @@ impl<'a> DL85 {
             return (cache, its_op, data.1, instant);
         }
 
-        let mut new_candidates = DL85::retrieve_next_successors(&next_candidates, last_attribute, &mut its_op, min_support);
+        let mut new_candidates_data = DL85::retrieve_next_successors(&next_candidates, last_attribute, &mut its_op, min_support);
+        let mut new_candidates = new_candidates_data.0;
+        let expected_position = new_candidates_data.1;
 
         if new_candidates.is_empty() {
             parent_node_data.node_error = parent_node_data.leaf_error;
@@ -220,6 +220,21 @@ impl<'a> DL85 {
             its_op = data.0;
             new_candidates = data.1;
         }
+        if depth > 0{
+            let past_attribute_position = next_candidates.iter().position(|x| *x == last_attribute).unwrap();
+            let current_new_ = next_candidates.len() - past_attribute_position - 1;
+            let mut new_cand_to_eval = 0;
+            if (expected_position) < new_candidates.len(){
+                new_cand_to_eval = new_candidates.len() - expected_position ;
+            }
+            let excluded_candidates_size = current_new_ -   new_cand_to_eval;
+            if excluded_candidates_size > 0 {
+                let cache_size_to_remove = its_op.max_cache_nodes(excluded_candidates_size as u64, max_depth-depth);
+                cache.max_cachesize -= cache_size_to_remove;
+            }
+        }
+        //println!("Search space Exploration : {} / {}. As {:.7} % of the cache.", cache.cachesize, cache.max_cachesize, cache.cachesize as f64 * 100. /cache.max_cachesize as f64);
+
 
         for (idx, attribute) in new_candidates.iter().enumerate() {
             let child_discrepancy = match use_discrepancy {
@@ -406,12 +421,14 @@ impl<'a> DL85 {
     }
 
 
-    fn retrieve_next_successors<T: ItemsetBitvector>(candidates: &Vec<Attribute>, last_attribute: Attribute, its_op: &mut T, min_support: u64) -> Vec<Attribute> {
+    fn retrieve_next_successors<T: ItemsetBitvector>(candidates: &Vec<Attribute>, last_attribute: Attribute, its_op: &mut T, min_support: u64) -> (Vec<Attribute>, usize) {
         let mut next_candidates = vec![];
         let current_support = its_op.support();
-
+        let mut i = 0usize;
+        let mut expected_new_position = 0usize;
         for candidate in candidates {
             if *candidate == last_attribute {
+                expected_new_position = i;
                 continue;
             }
 
@@ -419,10 +436,12 @@ impl<'a> DL85 {
             let right_sup = current_support - left_sup;
 
             if left_sup >= min_support as usize && right_sup >= min_support as usize {
-                next_candidates.push(*candidate)
+                next_candidates.push(*candidate);
+                i+=1;
             }
+
         }
-        next_candidates
+        (next_candidates, expected_new_position)
     }
 
     fn check_time_out(instant: Instant, time_limit: f64) -> (bool, Instant) {
