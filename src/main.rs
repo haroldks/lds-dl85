@@ -147,7 +147,7 @@ fn run_test() -> Result<(), Error> {
             let mut out = out.to_string();
             out.push_str("json");
 
-            let mut timeout = 10.;
+
             let mut timeout_vec = vec![];
             let mut max_nodes_vec = vec![];
             let mut normal_nodes = vec![];
@@ -156,6 +156,7 @@ fn run_test() -> Result<(), Error> {
             let mut discrepancy_run = vec![];
             println!("Actual File: {:?}\n", path);
             for use_discrepancy in [false, true] {
+                let mut timeout = 10.;
                 while timeout <= 120. {
                     println!("Timeout\t:  {}", timeout);
                     println!("Using discrepancy\t:  {}\n", use_discrepancy);
@@ -164,6 +165,7 @@ fn run_test() -> Result<(), Error> {
                     let mut algo = DL85::new(its_op.get_infos());
                     let output = algo.run(min_support, max_depth, <f64>::MAX, timeout, -1, info_gain, use_discrepancy, false, its_op, Trie::new());
                     if use_discrepancy {
+                        timeout_vec.push(timeout);
                         discrepancy_nodes.push(output.0.cachesize);
                         discrepancy_run.push(output.0.root.data.node_error);
                     } else {
@@ -171,9 +173,8 @@ fn run_test() -> Result<(), Error> {
                         normal_nodes.push(output.0.cachesize);
                         normal_run.push(output.0.root.data.node_error);
                     }
+                    timeout += 20.;
                 }
-                timeout_vec.push(timeout);
-                timeout += 20.;
             }
             let infos = TimeoutComp::new(timeout_vec, max_nodes_vec, normal_nodes, discrepancy_nodes, normal_run, discrepancy_run);
             println!("File : {}", out);
