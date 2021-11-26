@@ -126,7 +126,7 @@ impl<'a> DL85 {
         return if !use_discrepancy {
             let empty_itemset: Vec<Item> = vec![];
             let now = Instant::now();
-            let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, max_error, 0, max_depth, use_discrepancy, None, None, min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache);
+            let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list.clone(), max_error, 0, max_depth, use_discrepancy, None, None, min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache, &candidates_list);
             println!("Duration:  {:?} milliseconds", data.3.elapsed().as_millis());
 
             if error_save_time > 0 {
@@ -145,7 +145,7 @@ impl<'a> DL85 {
             let empty_itemset: Vec<Item> = vec![];
             let mut reload_cache = false;
             let mut now = Instant::now();
-            let mut data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), max_error, 0, max_depth, use_discrepancy, Some(0), Some(0), min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache);
+            let mut data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), max_error, 0, max_depth, use_discrepancy, Some(0), Some(0), min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache, &candidates_list);
 
             reload_cache = true;
 
@@ -157,7 +157,7 @@ impl<'a> DL85 {
                 its_ops = data.1;
                 its_ops.reset();
                 now = data.3;
-                data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, new_upper_bound, new_parent_node, now, time_limit, use_info_gain, reload_cache);
+                data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, new_upper_bound, new_parent_node, now, time_limit, use_info_gain, reload_cache, &candidates_list);
                 if time_limit > 0. {
                     if now.elapsed().as_secs() as f64 > time_limit {
                         println!("Finished at discrepancy: {}", discrepancy);
@@ -181,7 +181,7 @@ impl<'a> DL85 {
     }
 
 
-    fn recursion<T: ItemsetBitvector>(mut cache: Trie, mut its_op: T, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, use_discrepancy: bool, current_discrepancy: Option<u64>, mut max_discrepancy: Option<u64>, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64, use_info_gain: bool, reload_cache: bool) -> (Trie, T, Node, Instant) {
+    fn recursion<T: ItemsetBitvector>(mut cache: Trie, mut its_op: T, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, use_discrepancy: bool, current_discrepancy: Option<u64>, mut max_discrepancy: Option<u64>, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64, use_info_gain: bool, reload_cache: bool, original_attributes: &Vec<Attribute>) -> (Trie, T, Node, Instant) {
         unsafe {
             CURRENT_ERROR = cache.root.data.node_error;
         }
@@ -202,7 +202,7 @@ impl<'a> DL85 {
             return (cache, its_op, data.1, instant);
         }
 
-        let mut new_candidates_data = DL85::retrieve_next_successors(&next_candidates, last_attribute, &mut its_op, min_support);
+        let new_candidates_data = DL85::retrieve_next_successors(&next_candidates, last_attribute, &mut its_op, min_support);
         let mut new_candidates = new_candidates_data.0;
         let expected_position = new_candidates_data.1;
 
@@ -218,7 +218,7 @@ impl<'a> DL85 {
             its_op = data.0;
             new_candidates = data.1;
         }
-        if depth > 0 {
+        if depth > 0 && !use_discrepancy{
             let past_attribute_position = next_candidates.iter().position(|x| *x == last_attribute).unwrap();
             let current_new_ = next_candidates.len() - past_attribute_position - 1;
             let mut new_cand_to_eval = 0;
@@ -236,7 +236,7 @@ impl<'a> DL85 {
 
         for (idx, attribute) in new_candidates.iter().enumerate() {
             if depth > 0 {
-                println!("Atttr: {}", attribute);
+                // println!("Atttr: {}", attribute);
             }
             let child_discrepancy = match use_discrepancy {
                 false => { None }
@@ -258,7 +258,7 @@ impl<'a> DL85 {
             child_item_set.sort_unstable();
 
             let mut first_node_data = DL85::retrieve_cache_emplacement_for_current_its(&mut cache, &mut its_op, &items[0], depth, current_discrepancy); // Error computation // cache_ref, item_ref, depth
-            let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), child_upper_bound, depth + 1, max_depth, use_discrepancy, child_discrepancy, max_discrepancy, min_support, max_error, first_node_data, instant, time_limit, use_info_gain, reload_cache);
+            let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), child_upper_bound, depth + 1, max_depth, use_discrepancy, child_discrepancy, max_discrepancy, min_support, max_error, first_node_data, instant, time_limit, use_info_gain, reload_cache, &original_attributes);
 
             cache = data.0;
             its_op = data.1;
@@ -287,7 +287,7 @@ impl<'a> DL85 {
                 let remaining_ub = child_upper_bound - first_split_error;
                 child_item_set.sort_unstable();
 
-                let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), remaining_ub, depth + 1, max_depth, use_discrepancy, child_discrepancy, max_discrepancy, min_support, max_error, second_node_data, instant, time_limit, use_info_gain, reload_cache);
+                let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), remaining_ub, depth + 1, max_depth, use_discrepancy, child_discrepancy, max_discrepancy, min_support, max_error, second_node_data, instant, time_limit, use_info_gain, reload_cache, &original_attributes);
 
                 cache = data.0;
                 its_op = data.1;
@@ -320,12 +320,22 @@ impl<'a> DL85 {
                     cache.update(&current_itemset, parent_node_data);
                 }
             } else {
+                if !use_discrepancy{
+                    if !use_info_gain{
+                        let current_new_ = original_attributes.len() - idx - 1;
+                        let node_to_remove = its_op.max_cache_nodes(current_new_ as u64, max_depth - depth - 1);
+                        cache.max_cachesize -= node_to_remove;
+                    }
+                    else {
+                        let current_new_ = new_candidates.len() - idx - 1;
+                        let node_to_remove = its_op.max_cache_nodes(current_new_ as u64, max_depth - depth - 1);
+                        cache.max_cachesize -= node_to_remove;
+                    }
+                }
 
-                let current_new_ = new_candidates.len() - idx - 1; // TODO: Use original set to reduce better according to past not next candidates
-                let node_to_remove = its_op.max_cache_nodes(current_new_ as u64, max_depth - depth - 1);
-                cache.max_cachesize -= node_to_remove;
-                println!("current new: {}", current_new_);
-                println!("Curr: {:?} last {},  depth = {}, maxDepth = {} to remove: {}", current_itemset, last_attribute, depth, max_depth, node_to_remove);
+
+                // println!("current new: {}", current_new_);
+                // println!("Curr: {:?} last {},  depth = {}, maxDepth = {} to remove: {}", current_itemset, last_attribute, depth, max_depth, node_to_remove);
 
 
                 let time_bundle = DL85::check_time_out(instant, time_limit);
