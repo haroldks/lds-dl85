@@ -258,7 +258,7 @@ impl<'a> DL85 {
             let first_split_error = first_node_data.node_error;
             its_op.backtrack();
 
-            if first_node_data.node_error < upper_bound {
+            if first_node_data.node_error < child_upper_bound {
                 let _second_item_sup = its_op.intersection_cover(&items[1]);
                 let mut child_item_set = current_itemset.clone();
                 child_item_set.push(items[1]);
