@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use clokwerk::{Scheduler, TimeUnits};
 use float_cmp::{ApproxEq, F64Margin};
-use plotters::prelude::*;
+// use plotters::prelude::*;
 
 use crate::cache::trie::Trie;
 use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
@@ -15,52 +15,52 @@ static mut CURRENT_ERROR: f64 = 0.;
 static mut ERRORS: Vec<f32> = vec![];
 
 #[allow(unused_variables)]
-fn make_a_plot(array: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
-    let root = BitMapBackend::new("plotters-doc-data.png", (640, 480)).into_drawing_area();
-    let lol = array.iter().enumerate().map(|x| (x.0 as f32, *x.1)).collect::<Vec<(f32, f32)>>();
-
-    if let Err(e) = root.fill(&WHITE) {
-        println!("Writing error: {}", e.to_string());
-    };
-    let root = root.margin(10, 10, 10, 10);
-    // After this point, we should be able to draw construct a chart context
-    let mut chart = ChartBuilder::on(&root)
-        // Set the caption of the chart
-        .caption("Error Plot", ("sans-serif", 40).into_font())
-        // Set the size of the label region
-        .x_label_area_size(20)
-        .y_label_area_size(40)
-        // Finally attach a coordinate on the drawing area and make a chart context
-        .build_cartesian_2d(0f32..(lol.len() as f32), IntoLogRange::log_scale(170f32..<f32>::MAX))?;
-
-    // Then we can draw a mesh
-    chart
-        .configure_mesh()
-        // We can customize the maximum number of labels allowed for each axis
-        .x_labels(5)
-        .y_labels(5)
-        // We can also change the format of the label text
-        .y_label_formatter(&|x| format!("{:.3}", x))
-        .draw()?;
-
-    // And we can draw something in the drawing area
-    chart.draw_series(LineSeries::new(
-        lol.clone(),
-        &RED,
-    ))?;
-    // Similarly, we can draw point series
-    // chart.draw_series(PointSeries::of_element(
-    //     lol,
-    //     5,
-    //     &RED,
-    //     &|c, s, st| {
-    //         return EmptyElement::at(c)    // We want to construct a composed element on-the-fly
-    //             + Circle::new((0,0),s,st.filled()) // At this point, the new pixel coordinate is established
-    //             + Text::new(format!("{:?}", c), (10, 0), ("sans-serif", 10).into_font());
-    //     },
-    // ))?;
-    Ok(())
-}
+// fn make_a_plot(array: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
+//     let root = BitMapBackend::new("plotters-doc-data.png", (640, 480)).into_drawing_area();
+//     let lol = array.iter().enumerate().map(|x| (x.0 as f32, *x.1)).collect::<Vec<(f32, f32)>>();
+//
+//     if let Err(e) = root.fill(&WHITE) {
+//         println!("Writing error: {}", e.to_string());
+//     };
+//     let root = root.margin(10, 10, 10, 10);
+//     // After this point, we should be able to draw construct a chart context
+//     let mut chart = ChartBuilder::on(&root)
+//         // Set the caption of the chart
+//         .caption("Error Plot", ("sans-serif", 40).into_font())
+//         // Set the size of the label region
+//         .x_label_area_size(20)
+//         .y_label_area_size(40)
+//         // Finally attach a coordinate on the drawing area and make a chart context
+//         .build_cartesian_2d(0f32..(lol.len() as f32), IntoLogRange::log_scale(170f32..<f32>::MAX))?;
+//
+//     // Then we can draw a mesh
+//     chart
+//         .configure_mesh()
+//         // We can customize the maximum number of labels allowed for each axis
+//         .x_labels(5)
+//         .y_labels(5)
+//         // We can also change the format of the label text
+//         .y_label_formatter(&|x| format!("{:.3}", x))
+//         .draw()?;
+//
+//     // And we can draw something in the drawing area
+//     chart.draw_series(LineSeries::new(
+//         lol.clone(),
+//         &RED,
+//     ))?;
+//     // Similarly, we can draw point series
+//     // chart.draw_series(PointSeries::of_element(
+//     //     lol,
+//     //     5,
+//     //     &RED,
+//     //     &|c, s, st| {
+//     //         return EmptyElement::at(c)    // We want to construct a composed element on-the-fly
+//     //             + Circle::new((0,0),s,st.filled()) // At this point, the new pixel coordinate is established
+//     //             + Text::new(format!("{:?}", c), (10, 0), ("sans-serif", 10).into_font());
+//     //     },
+//     // ))?;
+//     Ok(())
+// }
 
 
 #[allow(dead_code)]
@@ -115,7 +115,6 @@ impl<'a> DL85 {
             unsafe {
                 scheduler.every((error_save_time as u32).seconds()).run(move || {
                     let temp_error = CURRENT_ERROR;
-                    println!("Errorrr:  {}", temp_error);
                     ERRORS.push(temp_error as f32);
                 });
             };
@@ -132,14 +131,14 @@ impl<'a> DL85 {
                 //thread_handle.stop();
                 unsafe {
                     println!("Errors for each {} seconds : {:?}", error_save_time, ERRORS);
-                    if let Err(e) = make_a_plot(ERRORS.clone()) {
-                        println!("Writing error: {}", e.to_string());
-                    };
+                    // if let Err(e) = make_a_plot(ERRORS.clone()) {
+                    //     println!("Writing error: {}", e.to_string());
+                    // };
                 }
             }
             data
         } else {
-            let max_discrepancy = candidates_list.len() - 1;
+            let max_discrepancy = candidates_list.len();
             println!("Max discrepancy: {}", max_discrepancy); // TODO: Change max discrepancy handling
             let empty_itemset: Vec<Item> = vec![];
             let mut reload_cache = false;
@@ -149,17 +148,21 @@ impl<'a> DL85 {
             reload_cache = true;
 
             for discrepancy in 1..max_discrepancy + 1 {
+                println!("Current discrepancy: {}", discrepancy);
                 cache = data.0;
                 let new_parent_node = cache.root.data.clone();
                 let new_upper_bound = cache.root.data.node_error; // New way to prune more.
                 its_ops = data.1;
                 its_ops.reset();
                 now = data.3;
-                data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, max_error, new_parent_node, now, time_limit, use_info_gain, reload_cache);
-                if now.elapsed().as_secs() as f64 > time_limit {
-                    println!("Finished at discrepancy: {}", discrepancy);
-                    break;
+                data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, new_upper_bound, new_parent_node, now, time_limit, use_info_gain, reload_cache);
+                if time_limit > 0.{
+                    if now.elapsed().as_secs() as f64 > time_limit {
+                        println!("Finished at discrepancy: {}", discrepancy);
+                        break;
+                    }
                 }
+
             }
             println!("Duration:  {:?} milliseconds for discrepancy Search", data.3.elapsed().as_millis());
 
@@ -167,9 +170,9 @@ impl<'a> DL85 {
                 //thread_handle.stop();
                 unsafe {
                     println!("Errors for each {} seconds : {:?}", error_save_time, ERRORS);
-                    if let Err(e) = make_a_plot(ERRORS.clone()) {
-                        println!("Writing error: {}", e.to_string());
-                    };
+                    // if let Err(e) = make_a_plot(ERRORS.clone()) {
+                    //     println!("Writing error: {}", e.to_string());
+                    // };
                 }
             }
             data
@@ -220,7 +223,7 @@ impl<'a> DL85 {
             };
 
             if use_discrepancy {
-                max_discrepancy = min(max_discrepancy, Some((new_candidates.len() - 1) as u64));
+                max_discrepancy = min(max_discrepancy, Some((new_candidates.len()) as u64));
             }
 
             if use_discrepancy && child_discrepancy.unwrap() > max_discrepancy.unwrap() {
@@ -245,7 +248,7 @@ impl<'a> DL85 {
             let out_of_time = time_bundle.0;
             let instant = time_bundle.1;
 
-            if out_of_time {
+            if use_discrepancy && out_of_time {
                 parent_node_data.is_explored = false;
                 parent_node_data.node_error = parent_node_data.leaf_error;
                 return (cache, its_op, parent_node_data, instant);
@@ -255,7 +258,7 @@ impl<'a> DL85 {
             let first_split_error = first_node_data.node_error;
             its_op.backtrack();
 
-            if first_node_data.node_error < upper_bound {
+            if first_node_data.node_error < child_upper_bound {
                 let _second_item_sup = its_op.intersection_cover(&items[1]);
                 let mut child_item_set = current_itemset.clone();
                 child_item_set.push(items[1]);
@@ -274,7 +277,7 @@ impl<'a> DL85 {
                 let out_of_time = time_bundle.0;
                 let instant = time_bundle.1;
 
-                if out_of_time {
+                if use_discrepancy && out_of_time {
                     parent_node_data.is_explored = false;
                     parent_node_data.node_error = parent_node_data.leaf_error;
                     return (cache, its_op, parent_node_data, instant);
@@ -296,7 +299,7 @@ impl<'a> DL85 {
                 let out_of_time = time_bundle.0;
                 let instant = time_bundle.1;
 
-                if out_of_time {
+                if use_discrepancy && out_of_time {
                     parent_node_data.is_explored = false;
                     parent_node_data.node_error = parent_node_data.leaf_error;
                     return (cache, its_op, parent_node_data, instant);
@@ -336,6 +339,9 @@ impl<'a> DL85 {
             if current_discrepancy.is_some() {
                 if (current_discrepancy.unwrap() > max_discrepancy.unwrap()) && node.is_explored {
                     node.current_discrepancy = max_discrepancy;
+                    return (true, node);
+                }
+                if node.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }){
                     return (true, node);
                 }
             } else {

@@ -1,9 +1,13 @@
+use std::io::{Error};
+use std::fs::File;
+use serde::{Serialize, Deserialize};
+use serde_json::to_writer;
 use std::fmt;
 use std::fmt::Formatter;
 
 use crate::mining::types_def::Attribute;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tree {
     pub root: Attribute,
     pub left: Vec<Tree>,
@@ -25,6 +29,14 @@ impl Tree {
             error: None,
         }
     }
+
+    pub fn to_json(&self, filename: String) -> Result<(), Error> {
+        if let Err(e)= to_writer(&File::create(filename)?, &self){
+            println!("File Creating error: {}", e.to_string());
+        };
+        Ok(())
+    }
+
 }
 
 
