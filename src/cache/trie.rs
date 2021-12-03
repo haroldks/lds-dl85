@@ -59,13 +59,14 @@ impl TrieNode {
 pub struct Trie {
     pub root: TrieNode,
     pub cachesize: u64,
+    pub max_iterations: u128,
     pub is_done: bool,
 }
 
 #[allow(dead_code)]
 impl Trie {
     pub fn new() -> Trie {
-        Trie { root: TrieNode::new((usize::MAX, false)), cachesize: 0, is_done: false }
+        Trie { root: TrieNode::new((usize::MAX, false)), cachesize: 0, max_iterations: 0, is_done: false }
     }
 
     pub fn get(&mut self, key: &Vec<Item>) -> Option<&mut TrieNode> {
