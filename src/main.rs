@@ -17,7 +17,6 @@ use crate::mining::its_ops::ItemsetOps;
 use crate::mining::its_ops_chunked::ItemsetOpsChunked;
 use crate::mining::its_ops_long::ItemsetOpsLong;
 use crate::solution::solution::{accuracy, confusion_matrix, get_data_as_transactions_and_target, get_solution_tree, predict};
-
 mod mining;
 mod data;
 mod cache;
@@ -28,7 +27,7 @@ mod config;
 
 fn main() { // TODO: Unit tests
 
-    let do_test = true;
+    let do_test = false;
 
     if do_test {
         if let Err(e) = run_test() {
@@ -64,12 +63,10 @@ fn main() { // TODO: Unit tests
     let time_limit = config.time_limit;
     let error_save_time = config.error_save_time;
 
-
     let mut algo = DL85::new(itemset_bitset_operations.get_infos());
 
-
     print!("We start the run.. \n");
-    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, true, true, false, itemset_bitset_operations, cache);
+    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, true, false, false, itemset_bitset_operations, cache);
     println!("Cache Size : {:?} Nodes", output.0.cachesize);
     println!("Tree Error : {:?} ", output.0.root.data.node_error);
 
