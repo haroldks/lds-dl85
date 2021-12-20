@@ -191,6 +191,13 @@ impl<'a> DL85 {
         let time_bundle = DL85::check_time_out(instant, time_limit); // TODO: Use a function to check the out of time.
         let out_of_time = time_bundle.0;
         let instant = time_bundle.1;
+        if use_discrepancy && out_of_time {
+            parent_node_data.is_explored = false;
+            parent_node_data.node_error = parent_node_data.leaf_error;
+            return (cache, its_op, parent_node_data, instant);
+        }
+
+
         let current_support = its_op.support() as u64;
         let data = match use_discrepancy {
             false => { DL85::check_if_stop_condition_reached(parent_node_data, upper_bound, min_support, current_support, depth, max_depth, out_of_time, reload_cache, None, None) }
@@ -244,7 +251,7 @@ impl<'a> DL85 {
             };
 
             if use_discrepancy {
-                max_discrepancy = min(max_discrepancy, Some((new_candidates.len()) as u64));
+                max_discrepancy = min(Some(max_discrepancy.unwrap()), Some((new_candidates.len()) as u64));
             }
 
             if use_discrepancy && child_discrepancy.unwrap() > max_discrepancy.unwrap() {
@@ -258,6 +265,11 @@ impl<'a> DL85 {
             child_item_set.sort_unstable();
 
             let mut first_node_data = DL85::retrieve_cache_emplacement_for_current_its(&mut cache, &mut its_op, &items[0], depth, current_discrepancy); // Error computation // cache_ref, item_ref, depth
+            // let mut child_disc = max_discrepancy.clone();
+            // if first_node_data.leaf_error < child_upper_bound {
+            //     child_disc = Some(new_candidates.len() as u64);
+            // }
+
             let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), child_upper_bound, depth + 1, max_depth, use_discrepancy, child_discrepancy, max_discrepancy, min_support, max_error, first_node_data, instant, time_limit, use_info_gain, reload_cache, &original_attributes);
 
             cache = data.0;
@@ -265,15 +277,17 @@ impl<'a> DL85 {
             first_node_data = data.2;
             first_node_data.is_explored = true;
 
-            let time_bundle = DL85::check_time_out(instant, time_limit);
-            let out_of_time = time_bundle.0;
-            let instant = time_bundle.1;
-
-            if use_discrepancy && out_of_time {
-                parent_node_data.is_explored = false;
-                parent_node_data.node_error = parent_node_data.leaf_error;
-                return (cache, its_op, parent_node_data, instant);
-            }
+            // let time_bundle = DL85::check_time_out(instant, time_limit);
+            // let out_of_time = time_bundle.0;
+            // let instant = time_bundle.1;
+            //
+            // if use_discrepancy && out_of_time {
+            //     parent_node_data.is_explored = false;
+            //     parent_node_data.node_error = parent_node_data.leaf_error;
+            //     println!("{:?}", parent_node_data);
+            //     println!("{:?}", current_itemset);
+            //     return (cache, its_op, parent_node_data, instant);
+            // }
 
             cache.update(&child_item_set, first_node_data);
             let first_split_error = first_node_data.node_error;
@@ -298,11 +312,11 @@ impl<'a> DL85 {
                 let out_of_time = time_bundle.0;
                 let instant = time_bundle.1;
 
-                if use_discrepancy && out_of_time {
-                    parent_node_data.is_explored = false;
-                    parent_node_data.node_error = parent_node_data.leaf_error;
-                    return (cache, its_op, parent_node_data, instant);
-                }
+                // if use_discrepancy && out_of_time {
+                //     parent_node_data.is_explored = false;
+                //     parent_node_data.node_error = parent_node_data.leaf_error;
+                //     return (cache, its_op, parent_node_data, instant);
+                // }
                 cache.update(&child_item_set, second_node_data);
                 let second_split_error = second_node_data.node_error;
                 its_op.backtrack();
