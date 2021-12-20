@@ -15,8 +15,6 @@ use crate::node::node::Node;
 // use plotters::prelude::*;
 
 static mut CURRENT_ERROR: f64 = 0.;
-static mut ITERS: u128 = 0;
-static mut DROPPED: u64 = 0;
 static mut ERRORS: Vec<f32> = vec![];
 
 #[allow(unused_variables)]
@@ -90,7 +88,7 @@ impl<'a> DL85 {
     pub fn run<T: ItemsetBitvector>(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, use_info_gain: bool, use_discrepancy: bool, reload_cache: bool, mut its_ops: T, mut cache: Trie) -> (Trie, T, Node, Instant) {
         let init_distribution = its_ops.classes_cover();
         println!("Train distribution: {:?}", init_distribution);
-        println!("Number of itemsets: {:?}", its_ops.get_infos().1*2);
+        println!("Number of itemsets: {:?}", its_ops.get_infos().1 * 2);
 
         let mut scheduler = Scheduler::new(); // Scheduler for the error save time
 
@@ -133,9 +131,8 @@ impl<'a> DL85 {
             let now = Instant::now();
             let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, max_error, 0, max_depth, use_discrepancy, None, None, min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache, size);
             println!("Duration:  {:?} milliseconds", data.3.elapsed().as_millis());
-            unsafe {
-                println!("Ended with {:?} % of the iterations", ITERS as f64 * 100. / data.0.max_iterations as f64);
-            }
+            println!("Ended with {:?} % of the iterations", data.0.current_iterations as f64 * 100. / data.0.max_iterations as f64);
+
 
             if error_save_time > 0 {
                 //thread_handle.stop();
@@ -160,14 +157,14 @@ impl<'a> DL85 {
             for discrepancy in 1..max_discrepancy + 1 {
                 println!("Current discrepancy: {}", discrepancy);
                 cache = data.0;
+                cache.current_iterations = 0;
+
                 let new_parent_node = cache.root.data.clone();
                 let new_upper_bound = cache.root.data.node_error; // New way to prune more.
                 its_ops = data.1;
                 its_ops.reset();
                 now = data.3;
-                unsafe {
-                    ITERS = 0;
-                }
+
                 data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, new_upper_bound, new_parent_node, now, time_limit, use_info_gain, reload_cache, size);
                 if time_limit > 0. {
                     if now.elapsed().as_secs() as f64 > time_limit {
@@ -176,9 +173,8 @@ impl<'a> DL85 {
                     }
                 }
             }
-            unsafe {
-                println!("Ended with {:?} % of the iterations", ITERS as f64 * 100. / data.0.max_iterations as f64);
-            }
+
+            println!("Ended with {:?} % of the iterations", data.0.current_iterations as f64 * 100. / data.0.max_iterations as f64);
             println!("Duration:  {:?} milliseconds for discrepancy Search", data.3.elapsed().as_millis());
 
             if error_save_time > 0 {
@@ -196,8 +192,8 @@ impl<'a> DL85 {
 
 
     fn recursion<T: ItemsetBitvector>(mut cache: Trie, mut its_op: T, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, use_discrepancy: bool, current_discrepancy: Option<u64>, mut max_discrepancy: Option<u64>, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64, use_info_gain: bool, reload_cache: bool, original_len: usize) -> (Trie, T, Node, Instant) {
+        print!("ITER : {} % \r", cache.current_iterations as f64 * 100. / cache.max_iterations as f64);
         unsafe {
-            print!("ITER : {} % \r", ITERS as f64 * 100. / cache.max_iterations as f64);
             CURRENT_ERROR = cache.root.data.node_error;
         }
 
@@ -206,37 +202,41 @@ impl<'a> DL85 {
         let time_bundle = DL85::check_time_out(instant, time_limit); // TODO: Use a function to check the out of time.
         let out_of_time = time_bundle.0;
         let instant = time_bundle.1;
+
+        if use_discrepancy && out_of_time {
+            parent_node_data.is_explored = false;
+            parent_node_data.node_error = parent_node_data.leaf_error;
+            return (cache, its_op, parent_node_data, instant);
+        }
+
         let current_support = its_op.support() as u64;
         let data = match use_discrepancy {
             false => { DL85::check_if_stop_condition_reached(parent_node_data, upper_bound, min_support, current_support, depth, max_depth, out_of_time, reload_cache, None, None) }
             _ => { DL85::check_if_stop_condition_reached(parent_node_data, upper_bound, min_support, current_support, depth, max_depth, out_of_time, reload_cache, current_discrepancy, max_discrepancy) }
         };
         let prev_drop = (original_len) as u128 - depth.saturating_sub(1) as u128 - next_candidates.len() as u128;
-        if data.0 {
-            unsafe {
-                if !out_of_time {
-                    let sub_tree_potential_childs = original_len as u128 - depth as u128 - prev_drop;
-                    let to_remove = its_op.max_search_tree_space(sub_tree_potential_childs, (max_depth - depth) as u128);
-                    ITERS += to_remove
-                }
-            }
 
+        if data.0 {
+            if !out_of_time {
+                let sub_tree_potential_childs = original_len as u128 - depth as u128 - prev_drop;
+                let to_remove = its_op.max_search_tree_space(sub_tree_potential_childs, (max_depth - depth) as u128);
+                cache.current_iterations += to_remove
+            }
             cache.update(&current_itemset, data.1);
             return (cache, its_op, data.1, instant);
         }
 
         let mut new_candidates = DL85::retrieve_next_successors(&next_candidates, last_attribute, &mut its_op, min_support);
 
-        unsafe {
-            let dropped = (original_len as u128 - depth as u128 - new_candidates.len() as u128).saturating_sub(prev_drop);
-            if dropped > 0 {
-                let base = (original_len - (depth as usize)) as u128;
-                let remaining = its_op.max_search_tree_space(base - prev_drop, (max_depth - depth) as u128);
-                let real = its_op.max_search_tree_space(base - dropped, (max_depth - depth) as u128);
-                let to_remove = remaining - real;
-                ITERS += to_remove;
-            }
+        let dropped = (original_len as u128 - depth as u128 - new_candidates.len() as u128).saturating_sub(prev_drop);
+        if dropped > 0 {
+            let base = (original_len - (depth as usize)) as u128;
+            let remaining = its_op.max_search_tree_space(base - prev_drop, (max_depth - depth) as u128);
+            let real = its_op.max_search_tree_space(base - dropped, (max_depth - depth) as u128);
+            let to_remove = remaining - real;
+            cache.current_iterations += to_remove;
         }
+
 
         if new_candidates.is_empty() {
             parent_node_data.node_error = parent_node_data.leaf_error;
@@ -273,9 +273,8 @@ impl<'a> DL85 {
             child_item_set.sort_unstable();
 
             let mut first_node_data = DL85::retrieve_cache_emplacement_for_current_its(&mut cache, &mut its_op, &items[0], depth, current_discrepancy); // Error computation // cache_ref, item_ref, depth
-            unsafe {
-                ITERS += 1;
-            }
+            cache.current_iterations += 1;
+
             let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), child_upper_bound, depth + 1, max_depth, use_discrepancy, child_discrepancy, max_discrepancy, min_support, max_error, first_node_data, instant, time_limit, use_info_gain, reload_cache, original_len);
 
             cache = data.0;
@@ -283,15 +282,15 @@ impl<'a> DL85 {
             first_node_data = data.2;
             first_node_data.is_explored = true;
 
-            let time_bundle = DL85::check_time_out(instant, time_limit);
-            let out_of_time = time_bundle.0;
-            let instant = time_bundle.1;
-
-            if use_discrepancy && out_of_time {
-                parent_node_data.is_explored = false;
-                parent_node_data.node_error = parent_node_data.leaf_error;
-                return (cache, its_op, parent_node_data, instant);
-            }
+            // let time_bundle = DL85::check_time_out(instant, time_limit);
+            // let out_of_time = time_bundle.0;
+            // let instant = time_bundle.1;
+            //
+            // if use_discrepancy && out_of_time {
+            //     parent_node_data.is_explored = false;
+            //     parent_node_data.node_error = parent_node_data.leaf_error;
+            //     return (cache, its_op, parent_node_data, instant);
+            // }
 
             cache.update(&child_item_set, first_node_data);
             let first_split_error = first_node_data.node_error;
@@ -304,9 +303,8 @@ impl<'a> DL85 {
                 let mut second_node_data = DL85::retrieve_cache_emplacement_for_current_its(&mut cache, &mut its_op, &items[1], depth, current_discrepancy); // Error computation // cache_ref, item_ref, depth
                 let remaining_ub = child_upper_bound - first_split_error;
                 child_item_set.sort_unstable();
-                unsafe {
-                    ITERS += 1;
-                }
+                cache.current_iterations += 1;
+
                 let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), remaining_ub, depth + 1, max_depth, use_discrepancy, child_discrepancy, max_discrepancy, min_support, max_error, second_node_data, instant, time_limit, use_info_gain, reload_cache, original_len);
 
                 cache = data.0;
@@ -314,15 +312,15 @@ impl<'a> DL85 {
                 second_node_data = data.2;
                 second_node_data.is_explored = true;
 
-                let time_bundle = DL85::check_time_out(instant, time_limit);
-                let out_of_time = time_bundle.0;
-                let instant = time_bundle.1;
+                // let time_bundle = DL85::check_time_out(instant, time_limit);
+                // let out_of_time = time_bundle.0;
+                // let instant = time_bundle.1;
 
-                if use_discrepancy && out_of_time {
-                    parent_node_data.is_explored = false;
-                    parent_node_data.node_error = parent_node_data.leaf_error;
-                    return (cache, its_op, parent_node_data, instant);
-                }
+                // if use_discrepancy && out_of_time {
+                //     parent_node_data.is_explored = false;
+                //     parent_node_data.node_error = parent_node_data.leaf_error;
+                //     return (cache, its_op, parent_node_data, instant);
+                // }
                 cache.update(&child_item_set, second_node_data);
                 let second_split_error = second_node_data.node_error;
                 its_op.backtrack();
@@ -336,10 +334,9 @@ impl<'a> DL85 {
                     cache.update(&current_itemset, parent_node_data);
                 }
             } else {
-                unsafe {
-                    let a = its_op.max_search_tree_space((original_len as u128 - depth as u128 - prev_drop).saturating_sub(1), (max_depth - depth).saturating_sub(1) as u128) + 1;
-                    ITERS += a;
-                }
+                let a = its_op.max_search_tree_space((original_len as u128 - depth as u128 - prev_drop).saturating_sub(1), (max_depth - depth).saturating_sub(1) as u128) + 1;
+                cache.current_iterations += a;
+
                 let time_bundle = DL85::check_time_out(instant, time_limit);
                 let out_of_time = time_bundle.0;
                 let instant = time_bundle.1;
