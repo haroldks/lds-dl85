@@ -170,7 +170,7 @@ fn run_test() -> Result<(), Error> {
                     } else {
                         max_iterations.push(output.0.max_iterations);
                         normal_run.push(output.0.root.data.node_error);
-                        normal_iterations.push(output.0.current_discrepancy);
+                        normal_iterations.push(output.0.current_iterations);
                     }
                 }
             }
