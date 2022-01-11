@@ -224,7 +224,7 @@ fn run_test_discrepancy() ->  Result<(), Error> {
     // Read File here and get data set as a list
     let min_support = 1;
     let max_depth = 9;
-    let timeout = 30f64;
+    let timeout = 90f64;
     //let use_info_gain = true;
 
     for info_gain in [true, false] {

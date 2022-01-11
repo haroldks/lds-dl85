@@ -87,8 +87,8 @@ impl<'a> DL85 {
 
     pub fn run<T: ItemsetBitvector>(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, use_info_gain: bool, use_discrepancy: bool, reload_cache: bool, mut its_ops: T, mut cache: Trie) -> (Trie, T, Node, Instant, Vec<u64>, Vec<u128>, Vec<f64>) {
         let init_distribution = its_ops.classes_cover();
-        println!("Train distribution: {:?}", init_distribution);
-        println!("Number of itemsets: {:?}", its_ops.get_infos().1 * 2);
+        // println!("Train distribution: {:?}", init_distribution);
+        // println!("Number of itemsets: {:?}", its_ops.get_infos().1 * 2);
 
         let mut scheduler = Scheduler::new(); // Scheduler for the error save time
 
@@ -108,7 +108,7 @@ impl<'a> DL85 {
         }
         let size = candidates_list.len();
         cache.max_iterations = its_ops.max_search_tree_space(size as u128, max_depth as u128);
-        println!("Max Tree Search Space = {} iters", cache.max_iterations);
+        // println!("Max Tree Search Space = {} iters", cache.max_iterations);
 
         if use_info_gain {
             let data = DL85::sort_by_information_gain(its_ops, candidates_list);
@@ -130,8 +130,8 @@ impl<'a> DL85 {
             let empty_itemset: Vec<Item> = vec![];
             let now = Instant::now();
             let data = DL85::recursion(cache, its_ops, empty_itemset, <usize>::MAX, candidates_list, max_error, 0, max_depth, use_discrepancy, None, None, min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache, size);
-            println!("Duration:  {:?} milliseconds", data.3.elapsed().as_millis());
-            println!("Ended with {:?} % of the iterations", data.0.current_iterations as f64 * 100. / data.0.max_iterations as f64);
+            // println!("Duration:  {:?} milliseconds", data.3.elapsed().as_millis());
+            // println!("Ended with {:?} % of the iterations", data.0.current_iterations as f64 * 100. / data.0.max_iterations as f64);
 
 
             if error_save_time > 0 {
@@ -158,7 +158,7 @@ impl<'a> DL85 {
             dis_cache_size.push(data.0.cachesize);
             dis_time.push(data.3.elapsed().as_millis());
             dis_error.push(data.0.root.data.node_error);
-            println!("Discrepancy 0 took {:?} millisseconds", data.3.elapsed().as_millis());
+            // println!("Discrepancy 0 took {:?} millisseconds", data.3.elapsed().as_millis());
             reload_cache = true;
 
             for discrepancy in 1..max_discrepancy + 1 {
@@ -176,7 +176,7 @@ impl<'a> DL85 {
                 dis_cache_size.push(data.0.cachesize);
                 dis_error.push(data.0.root.data.node_error);
                 dis_time.push(data.3.elapsed().as_millis() - past_time);
-                println!("Discrepancy {} took {:?} millisseconds", discrepancy, data.3.elapsed().as_millis() - past_time);
+                // println!("Discrepancy {} took {:?} millisseconds", discrepancy, data.3.elapsed().as_millis() - past_time);
                 if data.0.root.data.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }){
                     break
                 }
@@ -188,7 +188,7 @@ impl<'a> DL85 {
                 }
             }
 
-            println!("Ended with {:?} % of the iterations", data.0.current_iterations as f64 * 100. / data.0.max_iterations as f64);
+            // println!("Ended with {:?} % of the iterations", data.0.current_iterations as f64 * 100. / data.0.max_iterations as f64);
             println!("Duration:  {:?} milliseconds for discrepancy Search", data.3.elapsed().as_millis());
 
             if error_save_time > 0 {
