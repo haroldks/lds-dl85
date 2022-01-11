@@ -177,6 +177,9 @@ impl<'a> DL85 {
                 dis_error.push(data.0.root.data.node_error);
                 dis_time.push(data.3.elapsed().as_millis() - past_time);
                 println!("Discrepancy {} took {:?} millisseconds", discrepancy, data.3.elapsed().as_millis() - past_time);
+                if data.0.root.data.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }){
+                    break
+                }
                 if time_limit > 0. {
                     if data.3.elapsed().as_secs() as f64 > time_limit {
                         println!("Finished at discrepancy: {}", discrepancy);
