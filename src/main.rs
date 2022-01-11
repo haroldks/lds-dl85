@@ -122,14 +122,17 @@ impl TimeoutComp {
 #[derive(Serialize, Deserialize, Debug)]
 struct Analyze {
     discrepancy_cache: Vec<u64>,
-    discrepancy_time: Vec<u128>
+    discrepancy_time: Vec<u128>,
+    discrepancy_error: Vec<f64>,
 }
 
 impl Analyze {
-    pub fn new(discrepancy_cache: Vec<u64>, discrepancy_time: Vec<u128>) -> Analyze {
+    pub fn new(discrepancy_cache: Vec<u64>, discrepancy_time: Vec<u128>, discrepancy_error: Vec<f64>) -> Analyze {
         Analyze {
+
             discrepancy_cache,
-            discrepancy_time
+            discrepancy_time,
+            discrepancy_error
         }
     }
 
@@ -253,7 +256,7 @@ fn run_test_discrepancy() ->  Result<(), Error> {
             let output = algo.run(min_support, max_depth, <f64>::MAX, timeout, -1, info_gain, true, false, its_op, Trie::new());
 
 
-            let infos = Analyze::new(output.4, output.5);
+            let infos = Analyze::new(output.4, output.5, output.6);
             println!("File : {}", out);
             if let Err(e) = infos.to_json(out.to_string()) {
                 println!("Error while creating json : {}", e);

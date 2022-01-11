@@ -85,7 +85,7 @@ impl<'a> DL85 {
     }
 
 
-    pub fn run<T: ItemsetBitvector>(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, use_info_gain: bool, use_discrepancy: bool, reload_cache: bool, mut its_ops: T, mut cache: Trie) -> (Trie, T, Node, Instant, Vec<u64>, Vec<u128>) {
+    pub fn run<T: ItemsetBitvector>(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, use_info_gain: bool, use_discrepancy: bool, reload_cache: bool, mut its_ops: T, mut cache: Trie) -> (Trie, T, Node, Instant, Vec<u64>, Vec<u128>, Vec<f64>) {
         let init_distribution = its_ops.classes_cover();
         println!("Train distribution: {:?}", init_distribution);
         println!("Number of itemsets: {:?}", its_ops.get_infos().1 * 2);
@@ -144,18 +144,20 @@ impl<'a> DL85 {
                 }
             }
             let (a, b, c, d) = data;
-            (a, b, c, d, vec![], vec![])
+            (a, b, c, d, vec![], vec![], vec![])
         } else {
             let max_discrepancy = candidates_list.len();
             println!("Max discrepancy: {}", max_discrepancy); // TODO: Change max discrepancy handling
             let empty_itemset: Vec<Item> = vec![];
             let mut dis_cache_size = vec![];
             let mut dis_time = vec![];
+            let mut dis_error = vec![];
             let mut reload_cache = false;
             let mut now = Instant::now();
             let mut data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), max_error, 0, max_depth, use_discrepancy, Some(0), Some(0), min_support, max_error, Node::new(<usize>::MAX, 0), now, time_limit, use_info_gain, reload_cache, size);
             dis_cache_size.push(data.0.cachesize);
             dis_time.push(data.3.elapsed().as_millis());
+            dis_error.push(data.0.root.data.node_error);
             println!("Discrepancy 0 took {:?} millisseconds", data.3.elapsed().as_millis());
             reload_cache = true;
 
@@ -172,6 +174,7 @@ impl<'a> DL85 {
                 let past_time = now.elapsed().as_millis();
                 data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, new_upper_bound, new_parent_node, now, time_limit, use_info_gain, reload_cache, size);
                 dis_cache_size.push(data.0.cachesize);
+                dis_error.push(data.0.root.data.node_error);
                 dis_time.push(data.3.elapsed().as_millis() - past_time);
                 println!("Discrepancy {} took {:?} millisseconds", discrepancy, data.3.elapsed().as_millis() - past_time);
                 if time_limit > 0. {
@@ -195,7 +198,7 @@ impl<'a> DL85 {
                 }
             }
             let (a, b, c, d) = data;
-            (a, b, c, d, dis_cache_size, dis_time)
+            (a, b, c, d, dis_cache_size, dis_time, dis_error)
         };
     }
 
