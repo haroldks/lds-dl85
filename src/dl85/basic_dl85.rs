@@ -143,7 +143,7 @@ impl<'a> DL85 {
                     // };
                 }
             }
-            (a, b, c, d) = data;
+            let (a, b, c, d) = data;
             (a, b, c, d, vec![], vec![])
         } else {
             let max_discrepancy = candidates_list.len();
@@ -194,8 +194,8 @@ impl<'a> DL85 {
                     // };
                 }
             }
-            (a, b, c, d) = data;
-            (a, b, c, d, dis_cache_size, dis_time);
+            let (a, b, c, d) = data;
+            (a, b, c, d, dis_cache_size, dis_time)
         };
     }
 

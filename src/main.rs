@@ -250,10 +250,10 @@ fn run_test_discrepancy() ->  Result<(), Error> {
             let data = DataLong::new(path.clone()).unwrap();
             let its_op = ItemsetOpsLong::new(&data);
             let mut algo = DL85::new(its_op.get_infos());
-            let output = algo.run(min_support, max_depth, <f64>::MAX, timeout, -1, info_gain, use_discrepancy, false, its_op, Trie::new());
+            let output = algo.run(min_support, max_depth, <f64>::MAX, timeout, -1, info_gain, true, false, its_op, Trie::new());
 
 
-            let infos = Analyze(output.4, output.5);
+            let infos = Analyze::new(output.4, output.5);
             println!("File : {}", out);
             if let Err(e) = infos.to_json(out.to_string()) {
                 println!("Error while creating json : {}", e);
