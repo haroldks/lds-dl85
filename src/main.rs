@@ -28,10 +28,10 @@ mod config;
 
 fn main() { // TODO: Unit tests
 
-    let do_test = false;
+    let do_test = true;
 
     if do_test {
-        if let Err(e) = run_test() {
+        if let Err(e) = run_test_discrepancy() {
             println!("Error while Running test json : {}", e);
         };
         process::exit(0);
@@ -67,7 +67,7 @@ fn main() { // TODO: Unit tests
     let mut algo = DL85::new(itemset_bitset_operations.get_infos());
 
     print!("We start the run.. \n");
-    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, true, false, false, itemset_bitset_operations, cache);
+    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, false, true, false, itemset_bitset_operations, cache);
     println!("Cache Size : {:?} Nodes", output.0.cachesize);
     println!("Tree Error : {:?} ", output.0.root.data.node_error);
 
@@ -115,6 +115,35 @@ impl TimeoutComp {
         Ok(())
     }
 }
+
+
+
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Analyze {
+    discrepancy_cache: Vec<u64>,
+    discrepancy_time: Vec<u128>
+}
+
+impl Analyze {
+    pub fn new(discrepancy_cache: Vec<u64>, discrepancy_time: Vec<u128>) -> Analyze {
+        Analyze {
+            discrepancy_cache,
+            discrepancy_time
+        }
+    }
+
+
+    pub fn to_json(&self, filename: String) -> Result<(), Error> {
+        if let Err(e) = to_writer(&File::create(filename)?, &self) {
+            println!("File Creating error: {}", e.to_string());
+        };
+        Ok(())
+    }
+}
+
+
+
 
 
 fn run_test() -> Result<(), Error> {
@@ -187,7 +216,52 @@ fn run_test() -> Result<(), Error> {
 
 
 
+fn run_test_discrepancy() ->  Result<(), Error> {
 
+    // Read File here and get data set as a list
+    let min_support = 1;
+    let max_depth = 9;
+    let timeout = 30f64;
+    //let use_info_gain = true;
+
+    for info_gain in [true, false] {
+        let files = fs::read_dir("datasets").unwrap();
+
+        for file in files {
+            let file = file?;
+            let path = file.path().to_str().unwrap().to_string();
+            let path_clone = path.clone();
+            let filename: Vec<&str> = path_clone.split("/").collect();
+
+            let right_split = &filename[1];
+            let mut out = "results/".to_string();
+            if !info_gain {
+                out = "results_no_ig/".to_string();
+            }
+            out.push_str(right_split);
+            let size = out.len();
+            let out = &out[..size - 3];
+            let mut out = out.to_string();
+            out.push_str("json");
+
+
+            println!("Actual File: {:?}\n", path);
+
+            let data = DataLong::new(path.clone()).unwrap();
+            let its_op = ItemsetOpsLong::new(&data);
+            let mut algo = DL85::new(its_op.get_infos());
+            let output = algo.run(min_support, max_depth, <f64>::MAX, timeout, -1, info_gain, use_discrepancy, false, its_op, Trie::new());
+
+
+            let infos = Analyze(output.4, output.5);
+            println!("File : {}", out);
+            if let Err(e) = infos.to_json(out.to_string()) {
+                println!("Error while creating json : {}", e);
+            };
+        }
+    }
+    Ok(())
+}
 
 
 
