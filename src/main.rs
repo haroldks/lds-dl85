@@ -225,10 +225,10 @@ fn run_test_discrepancy() ->  Result<(), Error> {
     // Read File here and get data set as a list
     let min_support = 1;
     let max_depth = 9;
-    let timeout = 0f64;
+    let timeout = <f64>::MAX;
     //let use_info_gain = true;
 
-    for info_gain in [true, false] {
+    for use_discrepancy in [true, false] {
         let files = fs::read_dir("datasets").unwrap();
 
         for file in files {
@@ -247,13 +247,13 @@ fn run_test_discrepancy() ->  Result<(), Error> {
             let tree_name = tree_name.to_string();
             tree_path.push_str(&*tree_name);
 
-            let mut out = "results/".to_string();
-            if !info_gain {
-                out = "results_no_ig/".to_string();
-                tree_path.push_str("_no_ig");
+            let mut out = "results_use_dis/".to_string();
+            if !use_discrepancy {
+                out = "results_no_dis/".to_string();
+                tree_path.push_str("_no_dis");
             }
             else {
-                tree_path.push_str("_ig");
+                tree_path.push_str("_use_dis");
             }
             out.push_str(right_split);
             tree_path.push_str(".json");
@@ -268,7 +268,7 @@ fn run_test_discrepancy() ->  Result<(), Error> {
             let data = DataLong::new(path.clone()).unwrap();
             let its_op = ItemsetOpsLong::new(&data);
             let mut algo = DL85::new(its_op.get_infos());
-            let output = algo.run(min_support, max_depth, <f64>::MAX, timeout, -1, info_gain, true, false, its_op, Trie::new());
+            let output = algo.run(min_support, max_depth, <f64>::MAX, timeout, -1, false, use_discrepancy, false, its_op, Trie::new());
 
 
             let infos = Analyze::new(output.4, output.5, output.6);
