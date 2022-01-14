@@ -87,7 +87,7 @@ impl<'a> DL85 {
 
     pub fn run<T: ItemsetBitvector>(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, use_info_gain: bool, use_discrepancy: bool, reload_cache: bool, mut its_ops: T, mut cache: Trie) -> (Trie, T, Node, Instant, Vec<u64>, Vec<u128>, Vec<f64>) {
         let init_distribution = its_ops.classes_cover();
-        // println!("Train distribution: {:?}", init_distribution);
+        println!("Train distribution: {:?}", init_distribution);
         // println!("Number of itemsets: {:?}", its_ops.get_infos().1 * 2);
 
         let mut scheduler = Scheduler::new(); // Scheduler for the error save time
@@ -167,7 +167,11 @@ impl<'a> DL85 {
                 cache.current_iterations = 0;
 
                 let new_parent_node = cache.root.data.clone();
-                let new_upper_bound = cache.root.data.node_error; // New way to prune more.
+                let cache_error = cache.root.data.node_error;
+                let new_upper_bound = match cache_error < max_error {
+                    true => {cache_error}
+                    _ => {max_error}
+                }; // New way to prune more.
                 its_ops = data.1;
                 its_ops.reset();
                 now = data.3;
@@ -177,8 +181,8 @@ impl<'a> DL85 {
                 dis_error.push(data.0.root.data.node_error);
                 dis_time.push(data.3.elapsed().as_millis() - past_time);
                 // println!("Discrepancy {} took {:?} millisseconds", discrepancy, data.3.elapsed().as_millis() - past_time);
-                if data.0.root.data.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }){
-                    break
+                if data.0.root.data.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }) {
+                    break;
                 }
                 if time_limit > 0. {
                     if data.3.elapsed().as_secs() as f64 > time_limit {

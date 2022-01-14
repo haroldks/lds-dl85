@@ -65,6 +65,7 @@ fn main() { // TODO: Unit tests
     let error_save_time = config.error_save_time;
 
     let mut algo = DL85::new(itemset_bitset_operations.get_infos());
+    println!("Infos {:?}",itemset_bitset_operations.get_infos());
 
     print!("We start the run.. \n");
     let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, false, true, false, itemset_bitset_operations, cache);
@@ -224,7 +225,7 @@ fn run_test_discrepancy() ->  Result<(), Error> {
     // Read File here and get data set as a list
     let min_support = 1;
     let max_depth = 9;
-    let timeout = 90f64;
+    let timeout = 0f64;
     //let use_info_gain = true;
 
     for info_gain in [true, false] {
@@ -235,13 +236,27 @@ fn run_test_discrepancy() ->  Result<(), Error> {
             let path = file.path().to_str().unwrap().to_string();
             let path_clone = path.clone();
             let filename: Vec<&str> = path_clone.split("/").collect();
+            let path_vec_size = filename.len();
 
-            let right_split = &filename[1];
+            let right_split = &filename[path_vec_size-1];
+            let mut tree_path = "trees_d9s1/".to_string();
+
+            let split_size = right_split.len();
+
+            let tree_name = &right_split[..split_size-4];
+            let tree_name = tree_name.to_string();
+            tree_path.push_str(&*tree_name);
+
             let mut out = "results/".to_string();
             if !info_gain {
                 out = "results_no_ig/".to_string();
+                tree_path.push_str("_no_ig");
+            }
+            else {
+                tree_path.push_str("_ig");
             }
             out.push_str(right_split);
+            tree_path.push_str(".json");
             let size = out.len();
             let out = &out[..size - 3];
             let mut out = out.to_string();
@@ -258,7 +273,12 @@ fn run_test_discrepancy() ->  Result<(), Error> {
 
             let infos = Analyze::new(output.4, output.5, output.6);
             println!("File : {}", out);
-            if let Err(e) = infos.to_json(out.to_string()) {
+            let tree_tuple = get_solution_tree(output.0);
+            if let Err(e) = tree_tuple.0.to_json(tree_path) {
+                println!("Error while creating json : {}", e);
+            };
+
+            if let Err(e) = infos.to_json(out) {
                 println!("Error while creating json : {}", e);
             };
         }
