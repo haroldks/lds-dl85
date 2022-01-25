@@ -160,14 +160,22 @@ impl<'a> DL85 {
                 cache.current_iterations = 0;
 
                 let new_parent_node = cache.root.data.clone();
-                let new_upper_bound = cache.root.data.node_error; // New way to prune more.
+                let cache_error = cache.root.data.node_error;
+                let new_upper_bound = match cache_error < max_error {
+                    true => {cache_error}
+                    _ => {max_error}
+                }; // New way to prune more.
                 its_ops = data.1;
                 its_ops.reset();
                 now = data.3;
-
+                let past_time = now.elapsed().as_millis();
                 data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, new_upper_bound, new_parent_node, now, time_limit, use_info_gain, reload_cache, size);
+                if data.0.root.data.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }) {
+                    break;
+                }
+
                 if time_limit > 0. {
-                    if now.elapsed().as_secs() as f64 > time_limit {
+                    if data.3.elapsed().as_secs() as f64 > time_limit {
                         println!("Finished at discrepancy: {}", discrepancy);
                         break;
                     }
@@ -192,7 +200,7 @@ impl<'a> DL85 {
 
 
     fn recursion<T: ItemsetBitvector>(mut cache: Trie, mut its_op: T, current_itemset: Vec<Item>, last_attribute: Attribute, next_candidates: Vec<Attribute>, upper_bound: f64, depth: u64, max_depth: u64, use_discrepancy: bool, current_discrepancy: Option<u64>, mut max_discrepancy: Option<u64>, min_support: u64, max_error: f64, mut parent_node_data: Node, instant: Instant, time_limit: f64, use_info_gain: bool, reload_cache: bool, original_len: usize) -> (Trie, T, Node, Instant) {
-        print!("ITER : {} % \r", cache.current_iterations as f64 * 100. / cache.max_iterations as f64);
+       // print!("ITER : {} % \r", cache.current_iterations as f64 * 100. / cache.max_iterations as f64);
         unsafe {
             CURRENT_ERROR = cache.root.data.node_error;
         }

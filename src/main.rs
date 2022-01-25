@@ -134,9 +134,9 @@ fn run_test() -> Result<(), Error> {
             let filename: Vec<&str> = path_clone.split("/").collect();
 
             let right_split = &filename[1];
-            let mut out = "results/".to_string();
+            let mut out = "output_d9_ig/".to_string();
             if !info_gain {
-                out = "results_no_ig/".to_string();
+                out = "output_d9_no_ig/".to_string();
             }
             out.push_str(right_split);
             let size = out.len();
