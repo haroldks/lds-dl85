@@ -107,8 +107,8 @@ impl<'a> DL85 {
             }
         }
         let size = candidates_list.len();
-        cache.max_iterations = its_ops.max_search_tree_space(size as u128, max_depth as u128);
-        println!("Max Tree Search Space = {} iters", cache.max_iterations);
+        // cache.max_iterations = its_ops.max_search_tree_space(size as u128, max_depth as u128);
+        // println!("Max Tree Search Space = {} iters", cache.max_iterations);
 
         if use_info_gain {
             let data = DL85::sort_by_information_gain(its_ops, candidates_list);
@@ -222,28 +222,28 @@ impl<'a> DL85 {
             false => { DL85::check_if_stop_condition_reached(parent_node_data, upper_bound, min_support, current_support, depth, max_depth, out_of_time, reload_cache, None, None) }
             _ => { DL85::check_if_stop_condition_reached(parent_node_data, upper_bound, min_support, current_support, depth, max_depth, out_of_time, reload_cache, current_discrepancy, max_discrepancy) }
         };
-        let prev_drop = (original_len) as u128 - depth.saturating_sub(1) as u128 - next_candidates.len() as u128;
+        // let prev_drop = (original_len) as u128 - depth.saturating_sub(1) as u128 - next_candidates.len() as u128;
 
         if data.0 {
-            if !out_of_time {
-                let sub_tree_potential_childs = original_len as u128 - depth as u128 - prev_drop;
-                let to_remove = its_op.max_search_tree_space(sub_tree_potential_childs, (max_depth - depth) as u128);
-                cache.current_iterations += to_remove
-            }
+            // if !out_of_time {
+            //     let sub_tree_potential_childs = original_len as u128 - depth as u128 - prev_drop;
+            //     let to_remove = its_op.max_search_tree_space(sub_tree_potential_childs, (max_depth - depth) as u128);
+            //     cache.current_iterations += to_remove
+            // }
             cache.update(&current_itemset, data.1);
             return (cache, its_op, data.1, instant);
         }
 
         let mut new_candidates = DL85::retrieve_next_successors(&next_candidates, last_attribute, &mut its_op, min_support);
 
-        let dropped = (original_len as u128 - depth as u128 - new_candidates.len() as u128).saturating_sub(prev_drop);
-        if dropped > 0 {
-            let base = (original_len - (depth as usize)) as u128;
-            let remaining = its_op.max_search_tree_space(base - prev_drop, (max_depth - depth) as u128);
-            let real = its_op.max_search_tree_space(base - dropped, (max_depth - depth) as u128);
-            let to_remove = remaining - real;
-            cache.current_iterations += to_remove;
-        }
+        // let dropped = (original_len as u128 - depth as u128 - new_candidates.len() as u128).saturating_sub(prev_drop);
+        // if dropped > 0 {
+        //     let base = (original_len - (depth as usize)) as u128;
+        //     let remaining = its_op.max_search_tree_space(base - prev_drop, (max_depth - depth) as u128);
+        //     let real = its_op.max_search_tree_space(base - dropped, (max_depth - depth) as u128);
+        //     let to_remove = remaining - real;
+        //     cache.current_iterations += to_remove;
+        // }
 
 
         if new_candidates.is_empty() {
@@ -281,7 +281,7 @@ impl<'a> DL85 {
             child_item_set.sort_unstable();
 
             let mut first_node_data = DL85::retrieve_cache_emplacement_for_current_its(&mut cache, &mut its_op, &items[0], depth, current_discrepancy); // Error computation // cache_ref, item_ref, depth
-            cache.current_iterations += 1;
+            // cache.current_iterations += 1;
 
             let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), child_upper_bound, depth + 1, max_depth, use_discrepancy, child_discrepancy, max_discrepancy, min_support, max_error, first_node_data, instant, time_limit, use_info_gain, reload_cache, original_len);
 
@@ -311,7 +311,7 @@ impl<'a> DL85 {
                 let mut second_node_data = DL85::retrieve_cache_emplacement_for_current_its(&mut cache, &mut its_op, &items[1], depth, current_discrepancy); // Error computation // cache_ref, item_ref, depth
                 let remaining_ub = child_upper_bound - first_split_error;
                 child_item_set.sort_unstable();
-                cache.current_iterations += 1;
+                // cache.current_iterations += 1;
 
                 let data = DL85::recursion(cache, its_op, child_item_set.clone(), *attribute, new_candidates.clone(), remaining_ub, depth + 1, max_depth, use_discrepancy, child_discrepancy, max_discrepancy, min_support, max_error, second_node_data, instant, time_limit, use_info_gain, reload_cache, original_len);
 
@@ -342,8 +342,8 @@ impl<'a> DL85 {
                     cache.update(&current_itemset, parent_node_data);
                 }
             } else {
-                let a = its_op.max_search_tree_space((original_len as u128 - depth as u128 - prev_drop).saturating_sub(1), (max_depth - depth).saturating_sub(1) as u128) + 1;
-                cache.current_iterations += a;
+                // let a = its_op.max_search_tree_space((original_len as u128 - depth as u128 - prev_drop).saturating_sub(1), (max_depth - depth).saturating_sub(1) as u128) + 1;
+                // cache.current_iterations += a;
 
                 let time_bundle = DL85::check_time_out(instant, time_limit);
                 let out_of_time = time_bundle.0;

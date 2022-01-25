@@ -90,20 +90,20 @@ struct TimeoutComp {
     timeout: Vec<f64>,
     normal_run: Vec<f64>,
     discrepancy_run: Vec<f64>,
-    max_iterations: Vec<u128>,
-    normal_iterations: Vec<u128>,
-    discrepancy_iterations: Vec<u128>,
+    // max_iterations: Vec<u128>,
+    // normal_iterations: Vec<u128>,
+    // discrepancy_iterations: Vec<u128>,
 }
 
 impl TimeoutComp {
-    pub fn new(timeout: Vec<f64>, normal_run: Vec<f64>, discrepancy_run: Vec<f64>,max_iterations: Vec<u128>, normal_iterations: Vec<u128>, discrepancy_iterations: Vec<u128>,) -> TimeoutComp {
+    pub fn new(timeout: Vec<f64>, normal_run: Vec<f64>, discrepancy_run: Vec<f64>) -> TimeoutComp {
         TimeoutComp {
             timeout,
             normal_run,
             discrepancy_run,
-            max_iterations,
-            normal_iterations,
-            discrepancy_iterations
+            // max_iterations,
+            // normal_iterations,
+            // discrepancy_iterations
         }
     }
 
@@ -148,9 +148,9 @@ fn run_test() -> Result<(), Error> {
             let mut timeout_vec = vec![];
             let mut normal_run = vec![];
             let mut discrepancy_run = vec![];
-            let mut max_iterations = vec![];
-            let mut normal_iterations = vec![];
-            let mut discrepancy_iterations = vec![];
+            // let mut max_iterations = vec![];
+            // let mut normal_iterations = vec![];
+            // let mut discrepancy_iterations = vec![];
 
             println!("Actual File: {:?}\n", path);
             for use_discrepancy in [false, true] {
@@ -166,15 +166,15 @@ fn run_test() -> Result<(), Error> {
                         timeout_vec.push(timeout);
 
                         discrepancy_run.push(output.0.root.data.node_error);
-                        discrepancy_iterations.push(output.0.current_iterations);
+                        // discrepancy_iterations.push(output.0.current_iterations);
                     } else {
-                        max_iterations.push(output.0.max_iterations);
+                        // max_iterations.push(output.0.max_iterations);
                         normal_run.push(output.0.root.data.node_error);
-                        normal_iterations.push(output.0.current_iterations);
+                        // normal_iterations.push(output.0.current_iterations);
                     }
                 }
             }
-            let infos = TimeoutComp::new(timeout_vec, normal_run, discrepancy_run, max_iterations, normal_iterations, discrepancy_iterations);
+            let infos = TimeoutComp::new(timeout_vec, normal_run, discrepancy_run);
             println!("File : {}", out);
             if let Err(e) = infos.to_json(out.to_string()) {
                 println!("Error while creating json : {}", e);
