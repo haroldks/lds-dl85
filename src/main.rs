@@ -31,7 +31,7 @@ fn main() { // TODO: Unit tests
     let do_test = false;
 
     if do_test {
-        if let Err(e) = run_test() {
+        if let Err(e) = run_c45_test(9, "c45_results.json".to_string()) {
             println!("Error while Running test json : {}", e);
         };
         process::exit(0);
@@ -183,6 +183,68 @@ fn run_test() -> Result<(), Error> {
     }
     Ok(())
 }
+#[derive(Serialize, Deserialize)]
+pub struct Tests {
+    pub datasets: Vec<String>,
+    pub errors: Vec<f64>,
+    pub depth: usize,
+}
+
+
+impl Tests {
+    pub fn new(depth: usize) -> Tests {
+        Tests {
+            datasets: vec![],
+            errors: vec![],
+            depth,
+        }
+    }
+    pub fn to_json(&self, filename: String) -> Result<(), Error> {
+        if let Err(e) = to_writer(&File::create(filename)?, &self) {
+            println!("File Creating error: {}", e.to_string());
+        };
+        Ok(())
+    }
+}
+
+fn run_c45_test(depth: usize, output: String) -> Result<(), Error> {
+
+    let mut results = Tests::new(depth);
+    let use_discrepancy = true;
+    let use_info_gain = true;
+    let min_support = 1;
+
+
+    let files = fs::read_dir("datasets").unwrap();
+    for file in files {
+        let file = file?;
+        let path = file.path().to_str().unwrap().to_string();
+
+        println!("On file  {:?}", path);
+
+        let path_clone = path.clone();
+        let filename: Vec<&str> = path_clone.split("/").collect();
+        let size = filename.len();
+        let dataset_name = &filename[size - 1];
+        let size = dataset_name.len();
+        let dataset_name = &dataset_name[..size - 4];
+        results.datasets.push(dataset_name.to_string());
+
+        let data = DataLong::new(path.clone()).unwrap();
+        let its_op = ItemsetOpsLong::new(&data);
+        let mut algo = DL85::new(its_op.get_infos());
+        let output = algo.run(min_support, depth as u64, <f64>::MAX, <f64>::MAX, -1, use_info_gain, use_discrepancy, false, its_op, Trie::new());
+
+
+
+        results.errors.push(output.0.root.data.node_error);
+
+    }
+
+    results.to_json(output);
+    Ok(())
+}
+
 
 
 
