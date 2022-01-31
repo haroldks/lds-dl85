@@ -1,4 +1,5 @@
 use std::{env, fs, process};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Error;
 use std::time::Instant;
@@ -12,6 +13,7 @@ use crate::data::dt::Data;
 use crate::data::dt_chuncked::*;
 use crate::data::dt_longed::DataLong;
 use crate::dl85::basic_dl85::DL85;
+use crate::experiments::experiments::{Test, TestConfig};
 use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
 use crate::mining::its_ops::ItemsetOps;
 use crate::mining::its_ops_chunked::ItemsetOpsChunked;
@@ -25,15 +27,26 @@ mod node;
 mod dl85;
 mod solution;
 mod config;
+mod experiments;
 
 fn main() { // TODO: Unit tests
 
     let do_test = true;
 
     if do_test {
-        if let Err(e) = run_test() {
+        let mut test = Test::new();
+
+        if let Err(e) = test.run(TestConfig {
+            min_support: 1,
+            max_depth: 9,
+            max_error: <f64>::MAX,
+            timeouts: None,
+            output_folders: [(true, "tests/ig_results/".to_string()), (false, "tests/no_ig_results/".to_string())],
+        }) {
             println!("Error while Running test json : {}", e);
-        };
+        }
+
+
         process::exit(0);
     }
 
@@ -84,93 +97,6 @@ fn main() { // TODO: Unit tests
 
     println!("Accuracy: {:?}", accuracy(dd.1.clone(), y_pred.clone()));
     println!("Confusion Matrix: {:?}", confusion_matrix(dd.1, y_pred, 2));
-}
-
-
-#[derive(Serialize, Deserialize, Debug)]
-struct TimeoutComp {
-    timeout: Vec<f64>,
-    normal_run: Vec<f64>,
-    discrepancy_run: Vec<f64>,
-}
-
-impl TimeoutComp {
-    pub fn new(timeout: Vec<f64>, normal_run: Vec<f64>, discrepancy_run: Vec<f64>) -> TimeoutComp {
-        TimeoutComp {
-            timeout,
-            normal_run,
-            discrepancy_run,
-        }
-    }
-
-
-    pub fn to_json(&self, filename: String) -> Result<(), Error> {
-        if let Err(e) = to_writer(&File::create(filename)?, &self) {
-            println!("File Creating error: {}", e.to_string());
-        };
-        Ok(())
-    }
-}
-
-
-fn run_test() -> Result<(), Error> {
-
-    // Read File here and get data set as a list
-    let min_support = 1;
-    let max_depth = 9;
-    //let use_info_gain = true;
-
-    for info_gain in [true, false] {
-        let files = fs::read_dir("datasets").unwrap();
-
-        for file in files {
-            let file = file?;
-            let path = file.path().to_str().unwrap().to_string();
-            let path_clone = path.clone();
-            let filename: Vec<&str> = path_clone.split("/").collect();
-
-            let right_split = &filename[1];
-            let mut out = "results/".to_string();
-            if !info_gain {
-                out = "results_no_ig/".to_string();
-            }
-            out.push_str(right_split);
-            let size = out.len();
-            let out = &out[..size - 3];
-            let mut out = out.to_string();
-            out.push_str("json");
-
-
-            let mut timeout_vec = vec![];
-            let mut normal_run = vec![];
-            let mut discrepancy_run = vec![];
-            println!("Actual File: {:?}\n", path);
-            for use_discrepancy in [false, true] {
-                let mut timeout = 10.;
-                while timeout <= 120. {
-                    println!("Timeout\t:  {}", timeout);
-                    println!("Using discrepancy\t:  {}\n", use_discrepancy);
-                    let data = DataLong::new(path.clone()).unwrap();
-                    let its_op = ItemsetOpsLong::new(&data);
-                    let mut algo = DL85::new(its_op.get_infos());
-                    let output = algo.run(min_support, max_depth, <f64>::MAX, timeout, -1, info_gain, use_discrepancy, false, its_op, Trie::new());
-                    if use_discrepancy {
-                        timeout_vec.push(timeout);
-                        discrepancy_run.push(output.0.root.data.node_error);
-                    } else {
-                        normal_run.push(output.0.root.data.node_error);
-                    }
-                    timeout += 20.;
-                }
-            }
-            let infos = TimeoutComp::new(timeout_vec, normal_run, discrepancy_run);
-            println!("File : {}", out);
-            if let Err(e) = infos.to_json(out.to_string()) {
-                println!("Error while creating json : {}", e);
-            };
-        }
-    }
-    Ok(())
 }
 
 
