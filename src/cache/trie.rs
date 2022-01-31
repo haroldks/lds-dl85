@@ -59,7 +59,7 @@ impl TrieNode {
 pub struct Trie {
     pub root: TrieNode,
     pub cachesize: u64,
-    pub is_done: bool,
+    pub is_done: bool
 }
 
 #[allow(dead_code)]
