@@ -8,18 +8,19 @@ use crate::solution::tree::Tree;
 
 pub fn get_solution_tree(cache: Trie) -> (Tree, Trie, u64) {
     if !cache.is_done || cache.root.data.test == <usize>::MAX {
-        (Tree::new(<usize>::MAX), cache, 0)
+        (Tree::new(None), cache, 0)
     } else {
         let best_attribute = cache.root.data.test;
-        let mut tree = Tree::new(best_attribute);
+        let mut tree = Tree::new(Some(best_attribute));
+        tree.current_depth = 0;
         tree.error = Option::from(cache.root.data.node_error);
         let branches = vec![vec![(best_attribute, false)], vec![(best_attribute, true)]];
 
         let data = get_sub_tree(branches[0].clone(), cache, 0);
-        tree.left.push(data.1);
+        tree.left = Some(Box::new(data.1));
 
         let data = get_sub_tree(branches[1].clone(), data.0, 0);
-        tree.right.push(data.1);
+        tree.right =  Some(Box::new(data.1));;
 
         (tree, data.0, data.2 + 1)
     }
@@ -32,26 +33,33 @@ fn get_sub_tree(parent: Vec<Item>, mut cache: Trie, depth: u64) -> (Trie, Tree, 
 
     let parent_attribute = parent[len - 1].0;
     let parent_node_data = parent_node.data;
-    let mut final_tree = Tree::new(parent_node_data.test);
+    let mut final_tree = Tree::new(Some(parent_node_data.test));
+
+    final_tree.leaf_error = parent_node_data.leaf_error;
+    final_tree.max_class = parent_node_data.max_class;
+    final_tree.error = Some(parent_node_data.node_error);
+    final_tree.current_depth = parent_node_data.current_depth + 1;
+
     if parent_attribute == parent_node_data.test || parent_node_data.is_leaf {
+        final_tree.root = None;
         final_tree.is_leaf = true;
-        final_tree.max_class = parent_node_data.max_class;
-        final_tree.error = Option::from(parent_node_data.node_error);
+        final_tree.error = Some(parent_node_data.node_error);
         (cache, final_tree, depth)
     } else {
         let mut item_set_vec = parent.clone();
         let checker = item_set_vec.iter().filter(|it| it.0 == parent_node_data.test).collect::<Vec<&Item>>();
         if checker.len() > 0 {
+            final_tree.root = None;
             final_tree.is_leaf = true;
-            final_tree.max_class = parent_node_data.max_class;
-            final_tree.error = Option::from(parent_node_data.node_error);
+            final_tree.error = Some(parent_node_data.node_error);
             (cache, final_tree, depth)
         } else {
             item_set_vec.push((parent_node_data.test, false)); //left
             item_set_vec.sort_unstable();
 
             let data = get_sub_tree(item_set_vec, cache, depth);
-            final_tree.left.push(data.1);
+            let left_tree_infos  =  (data.1.is_leaf, data.1.max_class);
+            final_tree.left = Some(Box::new(data.1));
 
             let curr_depth = data.2 + 1;
 
@@ -61,7 +69,16 @@ fn get_sub_tree(parent: Vec<Item>, mut cache: Trie, depth: u64) -> (Trie, Tree, 
 
 
             let data = get_sub_tree(item_set_vec, data.0, depth);
-            final_tree.right.push(data.1);
+            let right_tree_infos = (data.1.is_leaf, data.1.max_class);
+            if left_tree_infos.0 && right_tree_infos.0 && left_tree_infos.1 == right_tree_infos.1 {
+
+                final_tree.left = None;
+                final_tree.root = None;
+                final_tree.is_leaf = true;
+            }
+            else {
+                final_tree.right = Some(Box::new(data.1));
+            }
 
             (data.0, final_tree, max(data.2+1, curr_depth))
         }
@@ -74,10 +91,11 @@ pub fn predict(transactions: Vec<BitVec>, tree: Tree) -> Vec<usize> {
     for transaction in transactions {
         let mut clone_tree = tree.clone();
         while !clone_tree.is_leaf {
-            if !transaction[clone_tree.root] {
-                clone_tree = clone_tree.left[0].clone();
+            let root = clone_tree.root.unwrap();
+            if !transaction[root] {
+                clone_tree = *clone_tree.left.unwrap();
             } else {
-                clone_tree = clone_tree.right[0].clone();
+                clone_tree = *clone_tree.right.unwrap();
             }
         }
         y_pred.push(clone_tree.max_class);

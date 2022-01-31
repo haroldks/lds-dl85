@@ -5,28 +5,42 @@ use serde_json::to_writer;
 use std::fmt;
 use std::fmt::Formatter;
 
+
 use crate::mining::types_def::Attribute;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tree {
-    pub root: Attribute,
-    pub left: Vec<Tree>,
-    pub right: Vec<Tree>,
+    pub root: Option<Attribute>,
+    pub left: Option<Box<Tree>>,
+    pub right: Option<Box<Tree>>,
     pub is_leaf: bool,
     pub max_class: usize,
     pub error: Option<f64>,
+    pub leaf_error: f64,
+    pub current_depth: u64
+}
+
+
+pub struct NodeData{
+
+    pub attribute: Attribute,
+
+
+
 }
 
 
 impl Tree {
-    pub fn new(root: Attribute) -> Tree {
+    pub fn new(root: Option<Attribute>) -> Tree {
         Tree {
             root,
-            left: vec![],
-            right: vec![],
+            left: None,
+            right: None,
             is_leaf: false,
             max_class: 0,
             error: None,
+            leaf_error: <f64>::INFINITY,
+            current_depth: <u64>::MAX
         }
     }
 
@@ -42,7 +56,7 @@ impl Tree {
 
 impl fmt::Display for Tree {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        if let Err(e) = writeln!(f, "{{  Attribute: {}", self.root){
+        if let Err(e) = writeln!(f, "{{  Attribute: {:?}", self.root){
             println!("Writing error: {}", e.to_string());
         };
         if self.is_leaf {
