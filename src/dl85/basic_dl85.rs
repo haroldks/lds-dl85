@@ -87,6 +87,7 @@ impl<'a> DL85 {
     pub fn run<T: ItemsetBitvector>(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, use_info_gain: bool, use_discrepancy: bool, reload_cache: bool, mut its_ops: T, mut cache: Trie) -> (Trie, T, Node, Instant) {
         let init_distribution = its_ops.classes_cover();
         println!("Train distribution: {:?}", init_distribution);
+        println!("Number of itemsets: {:?}", its_ops.get_infos().1 * 2);
 
         let mut scheduler = Scheduler::new(); // Scheduler for the error save time
 
@@ -151,13 +152,20 @@ impl<'a> DL85 {
                 println!("Current discrepancy: {}", discrepancy);
                 cache = data.0;
                 let new_parent_node = cache.root.data.clone();
-                let new_upper_bound = cache.root.data.node_error; // New way to prune more.
+                let current_error = cache.root.data.node_error;
+                let new_upper_bound = match current_error < max_error {
+                    true => {current_error}
+                    _ => {max_error}
+                }; // New way to prune more.
                 its_ops = data.1;
                 its_ops.reset();
                 now = data.3;
                 data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, new_upper_bound, new_parent_node, now, time_limit, use_info_gain, reload_cache);
+                if data.0.root.data.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0}){
+                    break;
+                }
                 if time_limit > 0.{
-                    if now.elapsed().as_secs() as f64 > time_limit {
+                    if data.3.elapsed().as_secs() as f64 > time_limit {
                         println!("Finished at discrepancy: {}", discrepancy);
                         break;
                     }
@@ -190,6 +198,13 @@ impl<'a> DL85 {
         let time_bundle = DL85::check_time_out(instant, time_limit); // TODO: Use a function to check the out of time.
         let out_of_time = time_bundle.0;
         let instant = time_bundle.1;
+
+        if use_discrepancy && out_of_time {
+            parent_node_data.is_explored = false;
+            parent_node_data.node_error = parent_node_data.leaf_error;
+            return (cache, its_op, parent_node_data, instant);
+        }
+
         let current_support = its_op.support() as u64;
         let data = match use_discrepancy {
             false => { DL85::check_if_stop_condition_reached(parent_node_data, upper_bound, min_support, current_support, depth, max_depth, out_of_time, reload_cache, None, None) }
@@ -243,17 +258,6 @@ impl<'a> DL85 {
             its_op = data.1;
             first_node_data = data.2;
             first_node_data.is_explored = true;
-
-            let time_bundle = DL85::check_time_out(instant, time_limit);
-            let out_of_time = time_bundle.0;
-            let instant = time_bundle.1;
-
-            if use_discrepancy && out_of_time {
-                parent_node_data.is_explored = false;
-                parent_node_data.node_error = parent_node_data.leaf_error;
-                return (cache, its_op, parent_node_data, instant);
-            }
-
             cache.update(&child_item_set, first_node_data);
             let first_split_error = first_node_data.node_error;
             its_op.backtrack();
@@ -273,15 +277,6 @@ impl<'a> DL85 {
                 second_node_data = data.2;
                 second_node_data.is_explored = true;
 
-                let time_bundle = DL85::check_time_out(instant, time_limit);
-                let out_of_time = time_bundle.0;
-                let instant = time_bundle.1;
-
-                if use_discrepancy && out_of_time {
-                    parent_node_data.is_explored = false;
-                    parent_node_data.node_error = parent_node_data.leaf_error;
-                    return (cache, its_op, parent_node_data, instant);
-                }
                 cache.update(&child_item_set, second_node_data);
                 let second_split_error = second_node_data.node_error;
                 its_op.backtrack();
