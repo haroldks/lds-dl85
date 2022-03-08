@@ -131,16 +131,14 @@ impl ItemsetBitvector for ItemsetOpsChunked<'_> {
     fn get_nclasses(&self) -> usize {
         self.data.nclasses
     }
-
-
 }
 
 
 #[allow(dead_code)]
-impl <'a> ItemsetOpsChunked<'a> {
+impl<'a> ItemsetOpsChunked<'a> {
     // TODO : Implementation of valid words
     pub fn new(data: &DataChunked) -> ItemsetOpsChunked {
-        let ntransactions= data.ntransactions;
+        let ntransactions = data.ntransactions;
         let nchunks = data.data[0].len();
         let mut mask = Option::from(vec![BitVec::from_elem(64, true); nchunks]);
         let dead_bits = 64 - match ntransactions % 64 {
@@ -212,5 +210,4 @@ impl <'a> ItemsetOpsChunked<'a> {
         }
         self.frequency.unwrap()
     }
-
 }

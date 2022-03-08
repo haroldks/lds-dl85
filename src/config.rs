@@ -2,11 +2,11 @@ use float_cmp::{ApproxEq, F64Margin};
 
 pub struct Config {
     pub filename: String,
-    pub min_support : u64,
-    pub max_depth : u64,
-    pub max_error : f64,
-    pub time_limit : f64,
-    pub error_save_time: i32
+    pub min_support: u64,
+    pub max_depth: u64,
+    pub max_error: f64,
+    pub time_limit: f64,
+    pub error_save_time: i32,
 }
 
 
@@ -20,7 +20,7 @@ impl Config {
 
         let min_support = args[2].clone().parse::<u64>().unwrap();
         if min_support < 1 {
-           return  Err("Invalid min support. Min support should be greater than 0.");
+            return Err("Invalid min support. Min support should be greater than 0.");
         }
 
         let max_depth = args[3].clone().parse::<u64>().unwrap();
@@ -29,13 +29,13 @@ impl Config {
         }
 
         let mut max_error = args[4].clone().parse::<f64>().unwrap();
-        if max_error.approx_eq(0., F64Margin {ulps: 2, epsilon: 0.0}) {
+        if max_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }) {
             println!("Max error lower or equal to zero. Using infinity as the upper bound.");
             max_error = <f64>::MAX;
         }
 
         let mut time_limit = args[5].clone().parse::<f64>().unwrap();
-        if time_limit.approx_eq(0., F64Margin {ulps: 2, epsilon: 0.0}) {
+        if time_limit.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }) {
             println!("Time lower or equal to zero. Using no time limit option.");
             time_limit = 0.;
         }

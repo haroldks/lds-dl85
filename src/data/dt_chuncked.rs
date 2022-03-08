@@ -13,7 +13,7 @@ pub struct DataChunked {
     pub target: Vec<Vec<BitVec>>,
 }
 
-
+#[allow(dead_code)]
 impl DataChunked {
     // TODO: add comments for readability
     pub fn new(filename: String) -> Result<DataChunked, Error> {

@@ -1,10 +1,10 @@
-use std::io::{Error};
-use std::fs::File;
-use serde::{Serialize, Deserialize};
-use serde_json::to_writer;
 use std::fmt;
 use std::fmt::Formatter;
+use std::fs::File;
+use std::io::Error;
 
+use serde::{Deserialize, Serialize};
+use serde_json::to_writer;
 
 use crate::mining::types_def::Attribute;
 
@@ -17,16 +17,7 @@ pub struct Tree {
     pub max_class: usize,
     pub error: Option<f64>,
     pub leaf_error: f64,
-    pub current_depth: u64
-}
-
-
-pub struct NodeData{
-
-    pub attribute: Attribute,
-
-
-
+    pub current_depth: u64,
 }
 
 
@@ -40,42 +31,41 @@ impl Tree {
             max_class: 0,
             error: None,
             leaf_error: <f64>::INFINITY,
-            current_depth: <u64>::MAX
+            current_depth: <u64>::MAX,
         }
     }
 
     pub fn to_json(&self, filename: String) -> Result<(), Error> {
-        if let Err(e)= to_writer(&File::create(filename)?, &self){
+        if let Err(e) = to_writer(&File::create(filename)?, &self) {
             println!("File Creating error: {}", e.to_string());
         };
         Ok(())
     }
-
 }
 
 
 impl fmt::Display for Tree {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        if let Err(e) = writeln!(f, "{{  Attribute: {:?}", self.root){
+        if let Err(e) = writeln!(f, "{{  Attribute: {:?}", self.root) {
             println!("Writing error: {}", e.to_string());
         };
         if self.is_leaf {
-            if let Err(e) = writeln!(f, "  Error:  {}, Max Class:  {}", self.error.unwrap(), self.max_class){
+            if let Err(e) = writeln!(f, "  Error:  {}, Max Class:  {}", self.error.unwrap(), self.max_class) {
                 println!("Writing error: {}", e.to_string());
             };
         } else {
             for tree in &self.left {
-                if let Err(e) =  writeln!(f, "Left:  {}", tree){
+                if let Err(e) = writeln!(f, "Left:  {}", tree) {
                     println!("Writing error: {}", e.to_string());
                 };
             }
             for tree in &self.right {
-                if let Err(e) = writeln!(f, "Right:  {}", tree){
+                if let Err(e) = writeln!(f, "Right:  {}", tree) {
                     println!("Writing error: {}", e.to_string());
                 };
             }
         }
-        if let Err(e) =write!(f, " }}"){
+        if let Err(e) = write!(f, " }}") {
             println!("Writing error: {}", e.to_string());
         };
         Ok(())

@@ -125,7 +125,6 @@ impl ItemsetBitvector for ItemsetOps<'_> {
         self.backtrack();
         cover
     }
-
 }
 
 #[allow(dead_code)]
@@ -167,9 +166,8 @@ impl<'a> ItemsetOps<'a> {
     }
 
     fn count_in_vec(arr: &BitVec) -> usize {
-        arr.iter().filter(| a| *a).count()
+        arr.iter().filter(|a| *a).count()
     }
-
 
 
     pub fn frequency(&mut self) -> f32 {

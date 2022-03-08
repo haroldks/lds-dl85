@@ -16,7 +16,7 @@ pub struct TestConfig {
     pub max_error: f64,
     pub timeouts: Option<Vec<f64>>,
     #[serde(skip)]
-    pub output_folders: [(bool, String); 2] ,
+    pub output_folders: [(bool, String); 2],
 }
 
 #[derive(Serialize, Deserialize)]
@@ -32,11 +32,11 @@ pub struct Test {
 impl Test {
     pub fn new() -> Test {
         Test {
-            name : "".parse().unwrap(),
+            name: "".parse().unwrap(),
             timeout: vec![],
             dl85_errors: vec![],
             lds_errors: vec![],
-            test_config: None
+            test_config: None,
         }
     }
 
@@ -48,19 +48,22 @@ impl Test {
     }
 
     pub fn run(&mut self, conf: TestConfig) -> Result<(), Error> {
-
         self.test_config = Some(conf.clone());
 
         let timeouts = conf.timeouts.unwrap_or(vec![30., 60., 90.]);
-        let output_folders : HashMap<bool, String> = HashMap::from_iter(conf.output_folders);
+        let output_folders: HashMap<bool, String> = HashMap::from_iter(conf.output_folders);
 
         for (_, val) in output_folders.iter() {
             let _folder_creation = fs::create_dir_all(val);
             let _folder_creation = match _folder_creation {
                 Ok(_) => { println!("Created a directory at the path  {:?}", val) }
                 Err(_) => {
-                    fs::remove_dir_all(val);
-                    fs::create_dir_all(val);
+                    if let Err(e) = fs::remove_dir_all(val) {
+                        println!("Error while removing directories: {}", e.to_string());
+                    };
+                    if let Err(e) = fs::create_dir_all(val) {
+                        println!("Error while creating directories: {}", e.to_string());
+                    };
                     println!("Directory already exists at the path {:?}. Recreation", val);
                 }
             };

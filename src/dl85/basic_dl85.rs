@@ -4,12 +4,13 @@ use std::time::Instant;
 
 use clokwerk::{Scheduler, TimeUnits};
 use float_cmp::{ApproxEq, F64Margin};
-// use plotters::prelude::*;
 
 use crate::cache::trie::Trie;
 use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
 use crate::mining::types_def::{Attribute, Item};
 use crate::node::node::Node;
+
+// use plotters::prelude::*;
 
 static mut CURRENT_ERROR: f64 = 0.;
 static mut ERRORS: Vec<f32> = vec![];
@@ -61,8 +62,6 @@ static mut ERRORS: Vec<f32> = vec![];
 //     // ))?;
 //     Ok(())
 // }
-
-
 #[allow(dead_code)]
 pub struct DL85 {
     // TODO: Allow it to use generic types for differents ITS and DATA. Also solve the problem of the cache and its by removing them from the attributes'
@@ -87,12 +86,12 @@ impl<'a> DL85 {
     pub fn run<T: ItemsetBitvector>(&mut self, min_support: u64, max_depth: u64, max_error: f64, time_limit: f64, error_save_time: i32, use_info_gain: bool, use_discrepancy: bool, reload_cache: bool, mut its_ops: T, mut cache: Trie) -> (Trie, T, Node, Instant) {
         let init_distribution = its_ops.classes_cover();
         println!("Train distribution: {:?}", init_distribution);
-        println!("Number of itemsets: {:?}", its_ops.get_infos().1 * 2);
+
 
         let mut scheduler = Scheduler::new(); // Scheduler for the error save time
 
         #[allow(unused_variables)]
-        let thread_handle; // The thread handler to stop
+            let thread_handle; // The thread handler to stop
 
         let mut candidates_list: Vec<Attribute> = Vec::new();
 
@@ -105,6 +104,7 @@ impl<'a> DL85 {
                 }
             }
         }
+        println!("Number of itemsets: {:?}", candidates_list.len() * 2);
 
         if use_info_gain {
             let data = DL85::sort_by_information_gain(its_ops, candidates_list);
@@ -154,23 +154,22 @@ impl<'a> DL85 {
                 let new_parent_node = cache.root.data.clone();
                 let current_error = cache.root.data.node_error;
                 let new_upper_bound = match current_error < max_error {
-                    true => {current_error}
-                    _ => {max_error}
+                    true => { current_error }
+                    _ => { max_error }
                 }; // New way to prune more.
                 its_ops = data.1;
                 its_ops.reset();
                 now = data.3;
                 data = DL85::recursion(cache, its_ops, empty_itemset.clone(), <usize>::MAX, candidates_list.clone(), new_upper_bound, 0, max_depth, use_discrepancy, Some(0), Some(discrepancy as u64), min_support, new_upper_bound, new_parent_node, now, time_limit, use_info_gain, reload_cache);
-                if data.0.root.data.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0}){
+                if data.0.root.data.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }) {
                     break;
                 }
-                if time_limit > 0.{
+                if time_limit > 0. {
                     if data.3.elapsed().as_secs() as f64 > time_limit {
                         println!("Finished at discrepancy: {}", discrepancy);
                         break;
                     }
                 }
-
             }
             println!("Duration:  {:?} milliseconds for discrepancy Search", data.3.elapsed().as_millis());
 
@@ -339,7 +338,7 @@ impl<'a> DL85 {
                     node.current_discrepancy = max_discrepancy;
                     return (true, node);
                 }
-                if node.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }){
+                if node.node_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }) {
                     return (true, node);
                 }
             } else {
@@ -426,3 +425,4 @@ impl<'a> DL85 {
         };
     }
 }
+

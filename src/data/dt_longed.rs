@@ -45,9 +45,7 @@ impl DataLong {
         let mut counter = 0;
 
 
-
         for line in data.iter() {
-
             if counter == 64 {
                 actual_chunk -= 1;
                 counter = 0;
@@ -57,16 +55,14 @@ impl DataLong {
                 match j {
                     0 => { target.push(l.parse::<usize>().unwrap()) }
                     _ => {
-                        if l == &"1"{
+                        if l == &"1" {
                             inputs[(j - 1)][actual_chunk] = DataLong::bit_to_one(inputs[(j - 1)][actual_chunk], counter as u64)
                         }
                     }
                 }
-
             }
             counter += 1;
         }
-
 
 
         let mut nclasses = target.iter().collect::<HashSet<_>>().len();
@@ -91,7 +87,6 @@ impl DataLong {
             let class = target[i];
             targets_bv[class][actual_chunk] = DataLong::bit_to_one(targets_bv[class][actual_chunk], counter as u64);
             counter += 1;
-
         }
         // for (idx, class) in target.iter().enumerate() {
         //     targets_bv[*class][idx / 64] = DataLong::bit_to_one(targets_bv[*class][idx / 64], 63 - (idx % 64) as u64);
@@ -101,15 +96,11 @@ impl DataLong {
         // }
 
 
-
-
-
         Ok(DataLong { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv })
     }
 
     fn bit_to_one(original: u64, bit: u64) -> u64 {
         let mask = 1u64 << bit;
-        original |  mask
-
+        original | mask
     }
 }

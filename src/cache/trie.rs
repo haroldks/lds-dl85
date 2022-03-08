@@ -18,15 +18,15 @@ impl TrieEdges {
 
 impl fmt::Display for TrieEdges {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        if let Err(e) = writeln!(f, "{{  "){
+        if let Err(e) = writeln!(f, "{{  ") {
             println!("Writing error: {}", e.to_string());
         };
         for i in &self.edges {
-            if let Err(e) = write!(f, "\t{}", i){
+            if let Err(e) = write!(f, "\t{}", i) {
                 println!("Writing error: {}", e.to_string());
             };
         }
-        if let Err(e) = write!(f, " }}"){
+        if let Err(e) = write!(f, " }}") {
             println!("Writing error: {}", e.to_string());
         };
         Ok(())
@@ -59,7 +59,7 @@ impl TrieNode {
 pub struct Trie {
     pub root: TrieNode,
     pub cachesize: u64,
-    pub is_done: bool
+    pub is_done: bool,
 }
 
 #[allow(dead_code)]

@@ -1,7 +1,9 @@
 use std::cmp::max;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error};
+
 use bit_vec::BitVec;
+
 use crate::cache::trie::Trie;
 use crate::mining::types_def::Item;
 use crate::solution::tree::Tree;
@@ -20,7 +22,7 @@ pub fn get_solution_tree(cache: Trie) -> (Tree, Trie, u64) {
         tree.left = Some(Box::new(data.1));
 
         let data = get_sub_tree(branches[1].clone(), data.0, 0);
-        tree.right =  Some(Box::new(data.1));;
+        tree.right = Some(Box::new(data.1));
 
         (tree, data.0, data.2 + 1)
     }
@@ -58,7 +60,7 @@ fn get_sub_tree(parent: Vec<Item>, mut cache: Trie, depth: u64) -> (Trie, Tree, 
             item_set_vec.sort_unstable();
 
             let data = get_sub_tree(item_set_vec, cache, depth);
-            let left_tree_infos  =  (data.1.is_leaf, data.1.max_class);
+            let left_tree_infos = (data.1.is_leaf, data.1.max_class);
             final_tree.left = Some(Box::new(data.1));
 
             let curr_depth = data.2 + 1;
@@ -71,16 +73,14 @@ fn get_sub_tree(parent: Vec<Item>, mut cache: Trie, depth: u64) -> (Trie, Tree, 
             let data = get_sub_tree(item_set_vec, data.0, depth);
             let right_tree_infos = (data.1.is_leaf, data.1.max_class);
             if left_tree_infos.0 && right_tree_infos.0 && left_tree_infos.1 == right_tree_infos.1 {
-
                 final_tree.left = None;
                 final_tree.root = None;
                 final_tree.is_leaf = true;
-            }
-            else {
+            } else {
                 final_tree.right = Some(Box::new(data.1));
             }
 
-            (data.0, final_tree, max(data.2+1, curr_depth))
+            (data.0, final_tree, max(data.2 + 1, curr_depth))
         }
     }
 }
@@ -135,8 +135,7 @@ pub fn confusion_matrix(y_test: Vec<usize>, y_pred: Vec<usize>, nclasses: usize)
     return matrix;
 }
 
-pub fn accuracy(y_test: Vec<usize>, y_pred: Vec<usize>) -> f64{
-
+pub fn accuracy(y_test: Vec<usize>, y_pred: Vec<usize>) -> f64 {
     assert_eq!(y_test.len(), y_pred.len(), "Vectors length mismatch");
 
     let mut equal = vec![];
