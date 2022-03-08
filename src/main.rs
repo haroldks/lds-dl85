@@ -31,7 +31,7 @@ mod experiments;
 
 fn main() { // TODO: Unit tests
 
-    let do_test = true;
+    let do_test = false;
 
     if do_test {
         let mut test = Test::new();
@@ -82,7 +82,7 @@ fn main() { // TODO: Unit tests
 
 
     print!("We start the run.. \n");
-    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, true, true, false, itemset_bitset_operations, cache);
+    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, false, false, false, itemset_bitset_operations, cache);
     println!("Cache Size : {:?} Nodes", output.0.cachesize);
     println!("Tree Error : {:?} ", output.0.root.data.node_error);
 

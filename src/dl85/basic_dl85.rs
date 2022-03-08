@@ -332,7 +332,10 @@ impl<'a> DL85 {
 
         if reload_cache {
             if current_discrepancy.is_some() {
-                if (current_discrepancy.unwrap() > max_discrepancy.unwrap()) && node.is_explored {
+                //println!("{:?},  {:?}, {}", current_discrepancy, max_discrepancy, node.is_explored);
+                if (current_discrepancy.unwrap() > max_discrepancy.unwrap()) && node.is_explored { // TODO : Check if it is not possible to stop possible recomputation ? Give a meaning to is explored. Also add case when node is explored fully by puttind discrepancy at max
+                    println!("Here");
+
                     node.current_discrepancy = max_discrepancy;
                     return (true, node);
                 }
@@ -348,7 +351,7 @@ impl<'a> DL85 {
         }
 
         if current_discrepancy.is_some() {
-            if (current_discrepancy.unwrap() > max_discrepancy.unwrap()) && node.is_explored {
+            if (current_discrepancy.unwrap() > max_discrepancy.unwrap()) && node.is_explored { // TODO / Most likely check if node discrepancy is higher to max discrepancy
                 return (true, node);
             }
         }
