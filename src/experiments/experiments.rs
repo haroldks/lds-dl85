@@ -29,6 +29,7 @@ pub struct Test {
     pub test_config: Option<TestConfig>,
 }
 
+#[allow(dead_code)]
 impl Test {
     pub fn new() -> Test {
         Test {
