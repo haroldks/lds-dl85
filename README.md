@@ -18,16 +18,20 @@
 - [X] Sort successor by information gain or other
 - [X] Implement Limited Discrepancy Search
 - [X] Create a main file to use from command line
-- [ ] Use clap crate to allow default configuration for the algorithm
-- [ ] Fix Useless tree split when the error is done on the same class in each split
-- [ ] Test all implementations to see the fastest (Chunked, Not chunked)
+- [X] Use clap crate to allow default configuration for the algorithm
+- [X] Fix Useless tree split when the error is done on the same class in each split
+- [X] Test all implementations to see the fastest (Long is the fastest)
+  - [ ] Remove the others
 - [ ] Check Memory usage with C++ implementation
 - [ ] Fix warnings
 - [ ] Replace Vec to slices for the ItsOps implementations ? (Not necessary)
 - [ ] Implement lower bound to reduce the space search
 - [ ] Implement the valid words and limit trick to reduce computation
+- [ ] Implement Depth 2 optimization
+- [ ]Reduce memory using by removing clone calls
 
 - [ ] Visualization of the Tree
+- [ ] Unit Test implementation
 
 ### Topics
 
