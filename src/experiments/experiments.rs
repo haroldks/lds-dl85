@@ -7,7 +7,7 @@ use std::iter::FromIterator;
 use serde::{Deserialize, Serialize};
 use serde_json::to_writer;
 
-use crate::{DataLong, DL85, ItemsetBitvector, ItemsetOpsLong, Trie};
+use crate::{DataLong, ItemsetBitvector, ItemsetOpsLong, Trie, DL85};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TestConfig {
@@ -56,7 +56,9 @@ impl Test {
         for (_, val) in output_folders.iter() {
             let _folder_creation = fs::create_dir_all(val);
             let _folder_creation = match _folder_creation {
-                Ok(_) => { println!("Created a directory at the path  {:?}", val) }
+                Ok(_) => {
+                    println!("Created a directory at the path  {:?}", val)
+                }
                 Err(_) => {
                     if let Err(e) = fs::remove_dir_all(val) {
                         println!("Error while removing directories: {}", e.to_string());
@@ -68,7 +70,6 @@ impl Test {
                 }
             };
         }
-
 
         for use_information_gain in [true, false] {
             let files = fs::read_dir("datasets").unwrap();
@@ -100,7 +101,18 @@ impl Test {
                         let data = DataLong::new(path.clone()).unwrap();
                         let operator = ItemsetOpsLong::new(&data);
                         let mut algo = DL85::new(operator.get_infos());
-                        let output = algo.run(conf.min_support, conf.max_depth, conf.max_error, *timeout, -1, use_information_gain, use_discrepancy, false, operator, Trie::new());
+                        let output = algo.run(
+                            conf.min_support,
+                            conf.max_depth,
+                            conf.max_error,
+                            *timeout,
+                            -1,
+                            use_information_gain,
+                            use_discrepancy,
+                            false,
+                            operator,
+                            Trie::new(),
+                        );
 
                         if use_discrepancy {
                             self.timeout.push(*timeout);

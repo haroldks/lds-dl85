@@ -20,7 +20,6 @@ pub struct Tree {
     pub current_depth: u64,
 }
 
-
 impl Tree {
     pub fn new(root: Option<Attribute>) -> Tree {
         Tree {
@@ -43,14 +42,18 @@ impl Tree {
     }
 }
 
-
 impl fmt::Display for Tree {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if let Err(e) = writeln!(f, "{{  Attribute: {:?}", self.root) {
             println!("Writing error: {}", e.to_string());
         };
         if self.is_leaf {
-            if let Err(e) = writeln!(f, "  Error:  {}, Max Class:  {}", self.error.unwrap(), self.max_class) {
+            if let Err(e) = writeln!(
+                f,
+                "  Error:  {}, Max Class:  {}",
+                self.error.unwrap(),
+                self.max_class
+            ) {
                 println!("Writing error: {}", e.to_string());
             };
         } else {

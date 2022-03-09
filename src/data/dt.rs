@@ -27,7 +27,11 @@ impl Data {
     }
 
     fn data_as_it(data: Vec<String>, filename: String) -> Result<Data, Error> {
-        let nattributes = data[0].split_ascii_whitespace().collect::<Vec<&str>>().len() - 1;
+        let nattributes = data[0]
+            .split_ascii_whitespace()
+            .collect::<Vec<&str>>()
+            .len()
+            - 1;
         let ntransactions = data.len();
         // let lines: Vec<String> = buffered.lines().map(|x| x.unwrap()).collect();
         let mut inputs = vec![BitVec::from_elem(ntransactions, false); nattributes];
@@ -37,14 +41,13 @@ impl Data {
             let line = line.split_ascii_whitespace().collect::<Vec<&str>>();
             for (j, l) in line.iter().enumerate() {
                 match j {
-                    0 => { target.push(l.parse::<usize>().unwrap()) }
-                    _ => { inputs[j - 1].set(i, l == &"1") }
+                    0 => target.push(l.parse::<usize>().unwrap()),
+                    _ => inputs[j - 1].set(i, l == &"1"),
                 }
             }
         }
 
         let mut nclasses = target.iter().collect::<HashSet<_>>().len();
-
 
         if nclasses < 2 {
             nclasses = 2;
@@ -60,6 +63,13 @@ impl Data {
             targets_bv[*class].set(idx, true)
         }
 
-        Ok(Data { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv })
+        Ok(Data {
+            filename,
+            ntransactions,
+            nattributes,
+            nclasses,
+            data: inputs,
+            target: targets_bv,
+        })
     }
 }

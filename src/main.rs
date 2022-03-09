@@ -1,5 +1,5 @@
-use std::{env, process};
 use std::time::Instant;
+use std::{env, process};
 
 use crate::cache::trie::*;
 use crate::config::Config;
@@ -8,18 +8,21 @@ use crate::dl85::basic_dl85::DL85;
 use crate::experiments::experiments::{Test, TestConfig};
 use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
 use crate::mining::its_ops_long::ItemsetOpsLong;
-use crate::solution::solution::{accuracy, confusion_matrix, get_data_as_transactions_and_target, get_solution_tree, predict};
+use crate::solution::solution::{
+    accuracy, confusion_matrix, get_data_as_transactions_and_target, get_solution_tree, predict,
+};
 
-mod mining;
-mod data;
 mod cache;
-mod node;
-mod dl85;
-mod solution;
 mod config;
+mod data;
+mod dl85;
 mod experiments;
+mod mining;
+mod node;
+mod solution;
 
-fn main() { // TODO: Unit tests
+fn main() {
+    // TODO: Unit tests
 
     let do_test = false;
 
@@ -31,15 +34,16 @@ fn main() { // TODO: Unit tests
             max_depth: 9,
             max_error: <f64>::MAX,
             timeouts: None,
-            output_folders: [(true, "tests/ig_results/".to_string()), (false, "tests/no_ig_results/".to_string())],
+            output_folders: [
+                (true, "tests/ig_results/".to_string()),
+                (false, "tests/no_ig_results/".to_string()),
+            ],
         }) {
             println!("Error while Running test json : {}", e);
         }
 
-
         process::exit(0);
     }
-
 
     let args: Vec<String> = env::args().collect();
 
@@ -47,7 +51,6 @@ fn main() { // TODO: Unit tests
         println!("Problem parsing arguments: {}", err);
         process::exit(1);
     });
-
 
     println!("Everything is ok..\n");
     let filename = config.filename;
@@ -67,12 +70,21 @@ fn main() { // TODO: Unit tests
     let time_limit = config.time_limit;
     let error_save_time = config.error_save_time;
 
-
     let mut algo = DL85::new(itemset_bitset_operations.get_infos());
 
-
     print!("We start the run.. \n");
-    let output = algo.run(min_support, max_depth, max_error, time_limit, error_save_time, false, false, false, itemset_bitset_operations, cache);
+    let output = algo.run(
+        min_support,
+        max_depth,
+        max_error,
+        time_limit,
+        error_save_time,
+        false,
+        false,
+        false,
+        itemset_bitset_operations,
+        cache,
+    );
     println!("Cache Size : {:?} Nodes", output.0.cachesize);
     println!("Tree Error : {:?} ", output.0.root.data.node_error);
 
@@ -88,11 +100,3 @@ fn main() { // TODO: Unit tests
     println!("Accuracy: {:?}", accuracy(dd.1.clone(), y_pred.clone()));
     println!("Confusion Matrix: {:?}", confusion_matrix(dd.1, y_pred, 2));
 }
-
-
-
-
-
-
-
-

@@ -24,16 +24,19 @@ impl DataLong {
         DataLong::data_to_long(data_lines, filename)
     }
 
-
     fn data_to_long(mut data: Vec<String>, filename: String) -> Result<DataLong, Error> {
-        let nattributes = data[0].split_ascii_whitespace().collect::<Vec<&str>>().len() - 1;
+        let nattributes = data[0]
+            .split_ascii_whitespace()
+            .collect::<Vec<&str>>()
+            .len()
+            - 1;
         let ntransactions = data.len();
 
         let mut nchunks = 1;
         if ntransactions > 64 {
             nchunks = match ntransactions % 64 {
-                0 => { ntransactions / 64 }
-                _ => { (ntransactions / 64) + 1 }
+                0 => ntransactions / 64,
+                _ => (ntransactions / 64) + 1,
             };
         }
         let mut inputs = vec![vec![0u64; nchunks]; nattributes];
@@ -44,7 +47,6 @@ impl DataLong {
         let mut actual_chunk = nchunks - 1;
         let mut counter = 0;
 
-
         for line in data.iter() {
             if counter == 64 {
                 actual_chunk -= 1;
@@ -53,17 +55,17 @@ impl DataLong {
             let line = line.split_ascii_whitespace().collect::<Vec<&str>>();
             for (j, l) in line.iter().enumerate() {
                 match j {
-                    0 => { target.push(l.parse::<usize>().unwrap()) }
+                    0 => target.push(l.parse::<usize>().unwrap()),
                     _ => {
                         if l == &"1" {
-                            inputs[(j - 1)][actual_chunk] = DataLong::bit_to_one(inputs[(j - 1)][actual_chunk], counter as u64)
+                            inputs[(j - 1)][actual_chunk] =
+                                DataLong::bit_to_one(inputs[(j - 1)][actual_chunk], counter as u64)
                         }
                     }
                 }
             }
             counter += 1;
         }
-
 
         let mut nclasses = target.iter().collect::<HashSet<_>>().len();
 
@@ -85,7 +87,8 @@ impl DataLong {
                 counter = 0;
             }
             let class = target[i];
-            targets_bv[class][actual_chunk] = DataLong::bit_to_one(targets_bv[class][actual_chunk], counter as u64);
+            targets_bv[class][actual_chunk] =
+                DataLong::bit_to_one(targets_bv[class][actual_chunk], counter as u64);
             counter += 1;
         }
         // for (idx, class) in target.iter().enumerate() {
@@ -95,8 +98,14 @@ impl DataLong {
         //     }
         // }
 
-
-        Ok(DataLong { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv })
+        Ok(DataLong {
+            filename,
+            ntransactions,
+            nattributes,
+            nclasses,
+            data: inputs,
+            target: targets_bv,
+        })
     }
 
     fn bit_to_one(original: u64, bit: u64) -> u64 {

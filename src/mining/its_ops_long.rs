@@ -16,7 +16,6 @@ pub struct ItemsetOpsLong<'a> {
     updated: bool,
 }
 
-
 impl ItemsetBitvector for ItemsetOpsLong<'_> {
     fn intersection_cover(&mut self, second_its: &Item) -> usize {
         self.current.push(*second_its);
@@ -89,15 +88,16 @@ impl ItemsetBitvector for ItemsetOpsLong<'_> {
 
     fn top_class(&mut self) -> (usize, usize) {
         let classes_cover = self.classes_cover();
-        let (max_idx, max_val) =
-            classes_cover.iter().enumerate().
-                fold((0, classes_cover[0]), |(idxm, valm), (idx, val)|
-                    if val > &valm {
-                        (idx, *val)
-                    } else {
-                        (idxm, valm)
-                    },
-                );
+        let (max_idx, max_val) = classes_cover.iter().enumerate().fold(
+            (0, classes_cover[0]),
+            |(idxm, valm), (idx, val)| {
+                if val > &valm {
+                    (idx, *val)
+                } else {
+                    (idxm, valm)
+                }
+            },
+        );
         (max_idx, max_val)
     }
 
@@ -109,7 +109,11 @@ impl ItemsetBitvector for ItemsetOpsLong<'_> {
     }
 
     fn get_infos(&self) -> (usize, usize, usize) {
-        (self.data.ntransactions, self.data.nattributes, self.data.nclasses)
+        (
+            self.data.ntransactions,
+            self.data.nattributes,
+            self.data.nclasses,
+        )
     }
 
     fn get_current(&self) -> Vec<Item> {
@@ -137,10 +141,11 @@ impl<'a> ItemsetOpsLong<'a> {
         let ntransactions = data.ntransactions;
         let nchunks = data.data[0].len();
         let mut mask = Option::from(vec![<u64>::MAX; nchunks]);
-        let dead_bits = 64 - match ntransactions % 64 {
-            0 => { 0 }
-            _ => { nchunks * 64 - ntransactions }
-        };
+        let dead_bits = 64
+            - match ntransactions % 64 {
+                0 => 0,
+                _ => nchunks * 64 - ntransactions,
+            };
 
         let first_chunk = &mut mask.as_mut().unwrap()[0];
         for i in (dead_bits..64).rev() {
@@ -149,7 +154,17 @@ impl<'a> ItemsetOpsLong<'a> {
         }
         let cloned_mask = mask.as_ref().unwrap().clone();
 
-        ItemsetOpsLong { current: vec![], data, support: None, frequency: None, mask, mask_stack: vec![cloned_mask], ntransactions, updated: false, nchunks }
+        ItemsetOpsLong {
+            current: vec![],
+            data,
+            support: None,
+            frequency: None,
+            mask,
+            mask_stack: vec![cloned_mask],
+            ntransactions,
+            updated: false,
+            nchunks,
+        }
     }
 
     fn update_mask(&mut self, item: &Item) {
@@ -173,13 +188,13 @@ impl<'a> ItemsetOpsLong<'a> {
         self.mask = self.gen_not_self_mask();
     }
 
-
     fn gen_not_self_mask(&self) -> Option<Vec<u64>> {
         let mut mask = Option::from(vec![<u64>::MAX; self.nchunks]);
-        let dead_bits = 64 - match self.ntransactions % 64 {
-            0 => { 0 }
-            _ => { self.nchunks * 64 - self.ntransactions }
-        };
+        let dead_bits = 64
+            - match self.ntransactions % 64 {
+                0 => 0,
+                _ => self.nchunks * 64 - self.ntransactions,
+            };
 
         let first_chunk = &mut mask.as_mut().unwrap()[0];
         for i in (dead_bits..64).rev() {
@@ -188,7 +203,6 @@ impl<'a> ItemsetOpsLong<'a> {
         }
         mask
     }
-
 
     fn compute_support_from_mask(&mut self) -> usize {
         if self.mask.is_none() {
@@ -205,9 +219,12 @@ impl<'a> ItemsetOpsLong<'a> {
         self.support.unwrap()
     }
 
-
     fn count_in_vec(arr: &Vec<u64>) -> usize {
-        arr.iter().map(|bv| bv.count_ones() as usize).collect::<Vec<usize>>().iter().sum()
+        arr.iter()
+            .map(|bv| bv.count_ones() as usize)
+            .collect::<Vec<usize>>()
+            .iter()
+            .sum()
     }
 
     pub fn frequency(&mut self) -> f32 {

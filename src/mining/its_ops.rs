@@ -15,7 +15,6 @@ pub struct ItemsetOps<'a> {
     updated: bool,
 }
 
-
 impl ItemsetBitvector for ItemsetOps<'_> {
     fn intersection_cover(&mut self, second_its: &Item) -> usize {
         self.current.push(*second_its);
@@ -84,15 +83,16 @@ impl ItemsetBitvector for ItemsetOps<'_> {
 
     fn top_class(&mut self) -> (usize, usize) {
         let classes_cover = self.classes_cover();
-        let (max_idx, max_val) =
-            classes_cover.iter().enumerate().
-                fold((0, classes_cover[0]), |(idxm, valm), (idx, val)|
-                    if val > &valm {
-                        (idx, *val)
-                    } else {
-                        (idxm, valm)
-                    },
-                );
+        let (max_idx, max_val) = classes_cover.iter().enumerate().fold(
+            (0, classes_cover[0]),
+            |(idxm, valm), (idx, val)| {
+                if val > &valm {
+                    (idx, *val)
+                } else {
+                    (idxm, valm)
+                }
+            },
+        );
         (max_idx, max_val)
     }
 
@@ -104,7 +104,11 @@ impl ItemsetBitvector for ItemsetOps<'_> {
     }
 
     fn get_infos(&self) -> (usize, usize, usize) {
-        (self.data.ntransactions, self.data.nattributes, self.data.nclasses)
+        (
+            self.data.ntransactions,
+            self.data.nattributes,
+            self.data.nclasses,
+        )
     }
 
     fn get_current(&self) -> Vec<Item> {
@@ -133,9 +137,17 @@ impl<'a> ItemsetOps<'a> {
         let ntransactions = data.ntransactions;
         let mask = Option::from(BitVec::from_elem(ntransactions, true));
         let cloned_mask = mask.as_ref().unwrap().clone();
-        ItemsetOps { current: vec![], data, support: None, frequency: None, mask, mask_stack: vec![cloned_mask], ntransactions, updated: false }
+        ItemsetOps {
+            current: vec![],
+            data,
+            support: None,
+            frequency: None,
+            mask,
+            mask_stack: vec![cloned_mask],
+            ntransactions,
+            updated: false,
+        }
     }
-
 
     fn update_mask(&mut self, item: &Item) {
         let mask = self.mask.as_mut().unwrap();
@@ -168,7 +180,6 @@ impl<'a> ItemsetOps<'a> {
     fn count_in_vec(arr: &BitVec) -> usize {
         arr.iter().filter(|a| *a).count()
     }
-
 
     pub fn frequency(&mut self) -> f32 {
         if !self.updated {

@@ -9,7 +9,6 @@ pub struct TrieEdges {
     pub edges: Vec<TrieNode>,
 }
 
-
 impl TrieEdges {
     pub fn new<'a>() -> TrieEdges {
         TrieEdges { edges: vec![] }
@@ -33,7 +32,6 @@ impl fmt::Display for TrieEdges {
     }
 }
 
-
 #[derive(Debug)]
 pub struct TrieNode {
     pub item: Item,
@@ -44,17 +42,24 @@ pub struct TrieNode {
 
 impl fmt::Display for TrieNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{{ Item:  ({}, {}),  is_new:  {}  NodeData :  {},  Edges:  {}}}", self.item.0, self.item.1, self.is_new, self.data, self.sub_trie)
+        write!(
+            f,
+            "{{ Item:  ({}, {}),  is_new:  {}  NodeData :  {},  Edges:  {}}}",
+            self.item.0, self.item.1, self.is_new, self.data, self.sub_trie
+        )
     }
 }
-
 
 impl TrieNode {
     pub fn new(item: Item) -> TrieNode {
-        TrieNode { item, sub_trie: TrieEdges::new(), data: Node::new(item.0, 0), is_new: true }
+        TrieNode {
+            item,
+            sub_trie: TrieEdges::new(),
+            data: Node::new(item.0, 0),
+            is_new: true,
+        }
     }
 }
-
 
 pub struct Trie {
     pub root: TrieNode,
@@ -65,7 +70,11 @@ pub struct Trie {
 #[allow(dead_code)]
 impl Trie {
     pub fn new() -> Trie {
-        Trie { root: TrieNode::new((usize::MAX, false)), cachesize: 0, is_done: false }
+        Trie {
+            root: TrieNode::new((usize::MAX, false)),
+            cachesize: 0,
+            is_done: false,
+        }
     }
 
     pub fn get(&mut self, key: &Vec<Item>) -> Option<&mut TrieNode> {

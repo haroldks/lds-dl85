@@ -19,7 +19,6 @@ pub struct Node {
     // right: NodeData,
 }
 
-
 impl Node {
     pub fn new(test: Attribute, current_depth: u64) -> Node {
         Node {

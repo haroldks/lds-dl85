@@ -49,7 +49,10 @@ fn get_sub_tree(parent: Vec<Item>, mut cache: Trie, depth: u64) -> (Trie, Tree, 
         (cache, final_tree, depth)
     } else {
         let mut item_set_vec = parent.clone();
-        let checker = item_set_vec.iter().filter(|it| it.0 == parent_node_data.test).collect::<Vec<&Item>>();
+        let checker = item_set_vec
+            .iter()
+            .filter(|it| it.0 == parent_node_data.test)
+            .collect::<Vec<&Item>>();
         if checker.len() > 0 {
             final_tree.root = None;
             final_tree.is_leaf = true;
@@ -69,7 +72,6 @@ fn get_sub_tree(parent: Vec<Item>, mut cache: Trie, depth: u64) -> (Trie, Tree, 
             item_set_vec.push((parent_node_data.test, true)); //right
             item_set_vec.sort_unstable();
 
-
             let data = get_sub_tree(item_set_vec, data.0, depth);
             let right_tree_infos = (data.1.is_leaf, data.1.max_class);
             if left_tree_infos.0 && right_tree_infos.0 && left_tree_infos.1 == right_tree_infos.1 {
@@ -84,7 +86,6 @@ fn get_sub_tree(parent: Vec<Item>, mut cache: Trie, depth: u64) -> (Trie, Tree, 
         }
     }
 }
-
 
 pub fn predict(transactions: Vec<BitVec>, tree: Tree) -> Vec<usize> {
     let mut y_pred: Vec<usize> = Vec::new();
@@ -103,11 +104,17 @@ pub fn predict(transactions: Vec<BitVec>, tree: Tree) -> Vec<usize> {
     return y_pred;
 }
 
-pub fn get_data_as_transactions_and_target(filename: String) -> Result<(Vec<BitVec>, Vec<usize>), Error> {
+pub fn get_data_as_transactions_and_target(
+    filename: String,
+) -> Result<(Vec<BitVec>, Vec<usize>), Error> {
     let input = File::open(&filename)?; //Error Handling for missing filename
     let buffered = BufReader::new(input); // Buffer for the file
     let data_lines: Vec<String> = buffered.lines().map(|x| x.unwrap()).collect();
-    let nattributes = data_lines[0].split_ascii_whitespace().collect::<Vec<&str>>().len() - 1;
+    let nattributes = data_lines[0]
+        .split_ascii_whitespace()
+        .collect::<Vec<&str>>()
+        .len()
+        - 1;
     let ntransactions = data_lines.len();
     let mut inputs = vec![BitVec::from_elem(nattributes, false); ntransactions];
     let mut target = vec![];
@@ -115,16 +122,13 @@ pub fn get_data_as_transactions_and_target(filename: String) -> Result<(Vec<BitV
         let line = line.split_ascii_whitespace().collect::<Vec<&str>>();
         for (j, l) in line.iter().enumerate() {
             match j {
-                0 => { target.push(l.parse::<usize>().unwrap()) }
-                _ => {
-                    inputs[i].set(j - 1, l == &"1")
-                }
+                0 => target.push(l.parse::<usize>().unwrap()),
+                _ => inputs[i].set(j - 1, l == &"1"),
             }
         }
     }
     return Ok((inputs, target));
 }
-
 
 pub fn confusion_matrix(y_test: Vec<usize>, y_pred: Vec<usize>, nclasses: usize) -> Vec<Vec<i32>> {
     let mut matrix = vec![vec![0; nclasses]; nclasses];

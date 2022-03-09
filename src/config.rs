@@ -9,7 +9,6 @@ pub struct Config {
     pub error_save_time: i32,
 }
 
-
 impl Config {
     pub fn new(args: &[String]) -> Result<Config, &str> {
         if args.len() != 7 {
@@ -29,13 +28,25 @@ impl Config {
         }
 
         let mut max_error = args[4].clone().parse::<f64>().unwrap();
-        if max_error.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }) {
+        if max_error.approx_eq(
+            0.,
+            F64Margin {
+                ulps: 2,
+                epsilon: 0.0,
+            },
+        ) {
             println!("Max error lower or equal to zero. Using infinity as the upper bound.");
             max_error = <f64>::MAX;
         }
 
         let mut time_limit = args[5].clone().parse::<f64>().unwrap();
-        if time_limit.approx_eq(0., F64Margin { ulps: 2, epsilon: 0.0 }) {
+        if time_limit.approx_eq(
+            0.,
+            F64Margin {
+                ulps: 2,
+                epsilon: 0.0,
+            },
+        ) {
             println!("Time lower or equal to zero. Using no time limit option.");
             time_limit = 0.;
         }
@@ -45,6 +56,13 @@ impl Config {
             println!("Error save time lower or equal to zero. Using no save error time option.");
             error_save_time = -1;
         }
-        Ok(Config { filename, min_support, max_depth, max_error, time_limit, error_save_time })
+        Ok(Config {
+            filename,
+            min_support,
+            max_depth,
+            max_error,
+            time_limit,
+            error_save_time,
+        })
     }
 }
