@@ -64,6 +64,8 @@ impl TrieNode {
 pub struct Trie {
     pub root: TrieNode,
     pub cachesize: u64,
+    pub discrepancy: Option<usize>,
+    pub max_discrepancy: Option<usize>,
     pub is_done: bool,
 }
 
@@ -73,6 +75,8 @@ impl Trie {
         Trie {
             root: TrieNode::new((usize::MAX, false)),
             cachesize: 0,
+            discrepancy: None,
+            max_discrepancy: None,
             is_done: false,
         }
     }
