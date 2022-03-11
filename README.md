@@ -28,8 +28,7 @@
 - [ ] Implement lower bound to reduce the space search
 - [ ] Implement the valid words and limit trick to reduce computation
 - [ ] Implement Depth 2 optimization
-- [ ]Reduce memory using by removing clone calls
-
+- [ ] Reduce memory using by removing clone calls
 - [ ] Visualization of the Tree
 - [ ] Unit Test implementation
 
