@@ -172,6 +172,8 @@ impl<'a> DL85 {
             data
         } else {
             let max_discrepancy = candidates_list.len();
+            cache.max_discrepancy = Some(max_discrepancy);
+            cache.discrepancy = Some(0);
             println!("Max discrepancy: {}", max_discrepancy); // TODO: Change max discrepancy handling
             let empty_itemset: Vec<Item> = vec![];
             let mut reload_cache = false;
@@ -202,6 +204,7 @@ impl<'a> DL85 {
             for discrepancy in 1..max_discrepancy + 1 {
                 println!("Current discrepancy: {}", discrepancy);
                 cache = data.0;
+                cache.discrepancy = Some(discrepancy);
                 let new_parent_node = cache.root.data.clone();
                 let current_error = cache.root.data.node_error;
                 let new_upper_bound = match current_error < max_error {

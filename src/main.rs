@@ -10,6 +10,7 @@ use crate::data::dt_longed::DataLong;
 use crate::dl85::basic_dl85::DL85;
 use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
 use crate::mining::its_ops_long::ItemsetOpsLong;
+use crate::solution::export::Export;
 use crate::solution::solution::{
     accuracy, confusion_matrix, get_data_as_transactions_and_target, get_solution_tree, predict,
 };
@@ -45,16 +46,33 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
     println!("--------------------- Run over. --------------------- \n");
 
     println!("\n--------------------- Metrics ---------------------");
+
+    let mut result = Export::new();
+    result.support = cli.support.unwrap();
+    result.max_depth = cli.depth.unwrap();
+    result.timeout = cli.timeout;
+
+    if cli.allow_discrepancy {
+        result.allow_discrepancy = true;
+        result.discrepancy = output.0.discrepancy;
+        result.max_discrepancy = output.0.max_discrepancy;
+    }
+    if cli.use_information_gain {
+        result.use_information_gain = true;
+    }
+
+    result.cache_size = output.0.cachesize;
+    result.error = output.0.root.data.node_error;
     println!("Cache Size : {:?} Nodes", output.0.cachesize);
     println!("Tree Error : {:?} ", output.0.root.data.node_error);
+
     let solution_tuple = get_solution_tree(output.0);
     let metrics = get_data_as_transactions_and_target(filename.clone()).unwrap();
-
     let y_pred = predict(metrics.0.clone(), solution_tuple.0.clone());
-    println!(
-        "Accuracy: {:?}",
-        accuracy(metrics.1.clone(), y_pred.clone())
-    );
+    let accuracy = accuracy(metrics.1.clone(), y_pred.clone());
+    result.accuracy = accuracy;
+
+    println!("Accuracy: {:?}", accuracy);
     println!(
         "Confusion Matrix: {:?}",
         confusion_matrix(metrics.1, y_pred, 2)
@@ -64,9 +82,12 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
     println!("Depth: {:?}", solution_tuple.2);
     println!("Tree: {:?}", solution_tuple.0);
 
+    result.tree_depth = solution_tuple.2;
+    result.tree = solution_tuple.0;
+
     if let Some(output) = cli.output {
-        println!("Output path was given. Saving the tree to: {}.", output);
-        if let Err(e) = solution_tuple.0.to_json(output) {
+        println!("Output path was given. Saving results to: {}.", output);
+        if let Err(e) = result.to_json(output) {
             println!("Error while creating the tree json file : {}", e);
         }
     }
