@@ -48,6 +48,13 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
     println!("\n--------------------- Metrics ---------------------");
 
     let mut result = Export::new();
+
+    let basename = filename.clone();
+    let mut basename = *basename.split('/').collect::<Vec<&str>>().last().unwrap();
+    let len = basename.len();
+    basename = &basename[0..len - 4];
+
+    result.dataset = basename.to_string();
     result.support = cli.support.unwrap();
     result.max_depth = cli.depth.unwrap();
     result.timeout = cli.timeout;
