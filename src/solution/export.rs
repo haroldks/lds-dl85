@@ -7,6 +7,7 @@ use crate::solution::tree::Tree;
 
 #[derive(Serialize, Deserialize)]
 pub struct Export {
+    pub dataset: String,
     pub support: u64,
     pub max_depth: u64,
     pub timeout: f64,
@@ -27,6 +28,7 @@ pub struct Export {
 impl Export {
     pub fn new() -> Export{
         Export {
+            dataset: "".to_string(),
             support: 0,
             error: 0.0,
             cache_size: 0,
