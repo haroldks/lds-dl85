@@ -3,7 +3,7 @@ use clap::Parser;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
-use std::{process};
+use std::process;
 
 use crate::cache::trie::*;
 use crate::data::dt_longed::DataLong;
@@ -116,7 +116,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         process::exit(1);
     }
 
-    if let Err(e) = run_from_conf(cli){
+    if let Err(e) = run_from_conf(cli) {
         println!("Error {}, while running from the configuration", e);
     };
     Ok(())

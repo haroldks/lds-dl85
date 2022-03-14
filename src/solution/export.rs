@@ -1,9 +1,8 @@
-use std::io::Error;
-use std::fs::File;
-use serde_json::to_writer;
-use serde::{Deserialize, Serialize};
 use crate::solution::tree::Tree;
-
+use serde::{Deserialize, Serialize};
+use serde_json::to_writer;
+use std::fs::File;
+use std::io::Error;
 
 #[derive(Serialize, Deserialize)]
 pub struct Export {
@@ -14,19 +13,18 @@ pub struct Export {
     pub allow_discrepancy: bool,
     pub use_information_gain: bool,
 
-    pub max_discrepancy : Option<usize>,
+    pub max_discrepancy: Option<usize>,
     pub discrepancy: Option<usize>,
     pub error: f64,
     pub accuracy: f64,
     pub cache_size: u64,
 
     pub tree_depth: u64,
-    pub tree: Tree
+    pub tree: Tree,
 }
 
-
 impl Export {
-    pub fn new() -> Export{
+    pub fn new() -> Export {
         Export {
             dataset: "".to_string(),
             support: 0,
@@ -46,13 +44,12 @@ impl Export {
                 max_class: 0,
                 error: None,
                 leaf_error: 0.0,
-                current_depth: 0
+                current_depth: 0,
             },
             accuracy: 0.0,
-            max_depth: 0
+            max_depth: 0,
         }
     }
-
 
     pub fn to_json(&self, filename: String) -> Result<(), Error> {
         if let Err(e) = to_writer(&File::create(filename)?, &self) {
@@ -60,5 +57,4 @@ impl Export {
         };
         Ok(())
     }
-
 }
