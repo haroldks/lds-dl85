@@ -89,6 +89,8 @@ impl<'a> DL85 {
         error_save_time: i32,
         use_info_gain: bool,
         use_discrepancy: bool,
+        discrepancy_limit: Option<usize>,
+        recursion_limit: Option<usize>,
         reload_cache: bool,
         mut its_ops: T,
         mut cache: Trie,
@@ -135,6 +137,13 @@ impl<'a> DL85 {
             thread_handle = scheduler.watch_thread(Duration::from_millis(100));
         }
 
+        let rlimit = match recursion_limit.is_some() {
+            true => {recursion_limit.unwrap()}
+            _ => {0}
+
+        };
+
+
         return if !use_discrepancy {
             let empty_itemset: Vec<Item> = vec![];
             let now = Instant::now();
@@ -150,6 +159,7 @@ impl<'a> DL85 {
                 use_discrepancy,
                 None,
                 None,
+                rlimit,
                 min_support,
                 max_error,
                 Node::new(<usize>::MAX, 0),
@@ -171,7 +181,12 @@ impl<'a> DL85 {
             }
             data
         } else {
-            let max_discrepancy = candidates_list.len();
+
+            let mut max_discrepancy = candidates_list.len();
+            if discrepancy_limit.is_some(){
+                max_discrepancy = min(discrepancy_limit.unwrap(), max_discrepancy);
+            }
+
             cache.max_discrepancy = Some(max_discrepancy);
             cache.discrepancy = Some(0);
             println!("Max discrepancy: {}", max_discrepancy); // TODO: Change max discrepancy handling
@@ -190,6 +205,7 @@ impl<'a> DL85 {
                 use_discrepancy,
                 Some(0),
                 Some(0),
+                rlimit,
                 min_support,
                 max_error,
                 Node::new(<usize>::MAX, 0),
@@ -226,6 +242,7 @@ impl<'a> DL85 {
                     use_discrepancy,
                     Some(0),
                     Some(discrepancy as u64),
+                    rlimit,
                     min_support,
                     new_upper_bound,
                     new_parent_node,
@@ -280,6 +297,7 @@ impl<'a> DL85 {
         use_discrepancy: bool,
         current_discrepancy: Option<u64>,
         mut max_discrepancy: Option<u64>,
+        recursion_limit: usize,
         min_support: u64,
         max_error: f64,
         mut parent_node_data: Node,
@@ -292,6 +310,16 @@ impl<'a> DL85 {
             CURRENT_ERROR = cache.root.data.node_error;
         }
 
+        if recursion_limit > 0 && cache.recursion_count >= recursion_limit{
+            parent_node_data.is_explored = false;
+            parent_node_data.node_error = parent_node_data.leaf_error;
+            cache.update(&current_itemset, parent_node_data); // New
+            return (cache, its_op, parent_node_data, instant);
+        }
+
+
+        cache.recursion_count += 1;
+
         let mut child_upper_bound = upper_bound;
         let _min_lb = <f64>::MAX;
         let time_bundle = DL85::check_time_out(instant, time_limit); // TODO: Use a function to check the out of time.
@@ -301,6 +329,7 @@ impl<'a> DL85 {
         if use_discrepancy && out_of_time {
             parent_node_data.is_explored = false;
             parent_node_data.node_error = parent_node_data.leaf_error;
+            cache.update(&current_itemset, parent_node_data); // New
             return (cache, its_op, parent_node_data, instant);
         }
 
@@ -358,6 +387,11 @@ impl<'a> DL85 {
         }
 
         for (idx, attribute) in new_candidates.iter().enumerate() {
+
+            if recursion_limit > 0 && cache.recursion_count >= recursion_limit{
+                break
+            }
+
             let child_discrepancy = match use_discrepancy {
                 false => None,
                 _ => Some(idx as u64),
@@ -396,6 +430,7 @@ impl<'a> DL85 {
                 use_discrepancy,
                 child_discrepancy,
                 max_discrepancy,
+                recursion_limit,
                 min_support,
                 max_error,
                 first_node_data,
@@ -439,6 +474,7 @@ impl<'a> DL85 {
                     use_discrepancy,
                     child_discrepancy,
                     max_discrepancy,
+                    recursion_limit,
                     min_support,
                     max_error,
                     second_node_data,

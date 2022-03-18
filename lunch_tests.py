@@ -39,7 +39,9 @@ for allow_dis in ALLOW_DISCREPANCIES:
     for use_ig in USE_INFORMATION_GAIN:
         for time in TIMEOUTS:
             dir_name = f"{CONFIG_BASE_DIR}/confs_time_{time}_allow_dis_{allow_dis}_use_ig_{use_ig}"
-            result_dir = f"{RESULTS_DIR}/confs_time_{time}_allow_dis_{allow_dis}_use_ig_{use_ig}"
+            result_dir = (
+                f"{RESULTS_DIR}/confs_time_{time}_allow_dis_{allow_dis}_use_ig_{use_ig}"
+            )
             if os.path.exists(dir_name):
                 shutil.rmtree(dir_name)
 

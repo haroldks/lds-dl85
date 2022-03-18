@@ -9,6 +9,7 @@ pub struct Export {
     pub dataset: String,
     pub support: u64,
     pub max_depth: u64,
+    pub nb_features: usize,
     pub timeout: f64,
     pub allow_discrepancy: bool,
     pub use_information_gain: bool,
@@ -18,6 +19,7 @@ pub struct Export {
     pub error: f64,
     pub accuracy: f64,
     pub cache_size: u64,
+    pub recursion_count: usize,
 
     pub tree_depth: u64,
     pub tree: Tree,
@@ -30,6 +32,7 @@ impl Export {
             support: 0,
             error: 0.0,
             cache_size: 0,
+            recursion_count: 0,
             timeout: 0.0,
             discrepancy: None,
             max_discrepancy: None,
@@ -48,6 +51,7 @@ impl Export {
             },
             accuracy: 0.0,
             max_depth: 0,
+            nb_features: 0
         }
     }
 
