@@ -18,8 +18,13 @@ TO_DROP = [
     "test",
     "random_v2",
     "test_v2",
+    'paper_test',
+    'tic-tac-toe',
+    'paper',
+    'tic-tac-toe_',
+    'tic-tac-toe__',
+    'paper_',
 ]
-
 # LATEX CONSTANTS
 
 LABEL = "tab:limited_recursion"
@@ -132,6 +137,13 @@ def main():
     df.to_csv("results_limited_recursion.csv", index=False)
 
     reduced = df[~df.dataset.isin(TO_DROP)]
+    
+    # Just the 10 first datasets
+    names =  list(df.dataset.unique())[0:10]
+    reduced = df[df.dataset.isin(names)]
+    
+    
+    
     reduced = reduced.sort_values(
         ["features", "dataset", "features"], ascending=[False, False, True]
     )
