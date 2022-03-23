@@ -171,7 +171,11 @@ impl<'a> DL85 {
             }
             data
         } else {
-            let max_discrepancy = candidates_list.len();
+            let len = candidates_list.len() - 1;
+            let mut max_discrepancy = len;
+            for i in 1..max_depth {
+                max_discrepancy += len - i as usize;
+            }
             cache.max_discrepancy = Some(max_discrepancy);
             cache.discrepancy = Some(0);
             println!("Max discrepancy: {}", max_discrepancy); // TODO: Change max discrepancy handling
@@ -359,13 +363,14 @@ impl<'a> DL85 {
 
         for (idx, attribute) in new_candidates.iter().enumerate() {
             let child_discrepancy = match use_discrepancy {
-                false => None,
-                _ => Some(idx as u64),
+                false => { None }
+                _ => { Some(current_discrepancy.unwrap() + idx as u64)}
             };
 
-            if use_discrepancy {
-                max_discrepancy = min(max_discrepancy, Some((new_candidates.len()) as u64));
-            }
+
+            // if use_discrepancy {
+            //     max_discrepancy = min(max_discrepancy, Some((new_candidates.len()) as u64));
+            // }
 
             if use_discrepancy && child_discrepancy.unwrap() > max_discrepancy.unwrap() {
                 break;
