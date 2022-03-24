@@ -50,6 +50,14 @@ pub struct Cli {
     #[clap(short, long)]
     #[serde(default = "default_bool")]
     pub(crate) allow_discrepancy: bool,
+
+    #[clap(long)]
+    #[serde(default = "default_option")]
+    pub(crate) discrepancy_limit: Option<usize>,
+
+    #[clap(long)]
+    #[serde(default = "default_option")]
+    pub(crate) recursion_limit: Option<usize>,
 }
 
 fn default_error() -> f64 {
@@ -66,4 +74,8 @@ fn default_timeout() -> f64 {
 
 fn default_bool() -> bool {
     false
+}
+
+fn default_option() -> Option<usize> {
+    None
 }

@@ -39,6 +39,8 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
         cli.log_error_time,
         cli.use_information_gain,
         cli.allow_discrepancy,
+        cli.discrepancy_limit,
+        cli.recursion_limit,
         false,
         operator,
         cache,
@@ -55,6 +57,7 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
     basename = &basename[0..len - 4];
 
     result.dataset = basename.to_string();
+    result.nb_features = output.1.data.nattributes;
     result.support = cli.support.unwrap();
     result.max_depth = cli.depth.unwrap();
     result.timeout = cli.timeout;
@@ -69,6 +72,7 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
     }
 
     result.cache_size = output.0.cachesize;
+    result.recursion_count = output.0.recursion_count;
     result.error = output.0.root.data.node_error;
     println!("Cache Size : {:?} Nodes", output.0.cachesize);
     println!("Tree Error : {:?} ", output.0.root.data.node_error);

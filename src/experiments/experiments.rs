@@ -110,6 +110,8 @@ impl Test {
                             -1,
                             use_information_gain,
                             use_discrepancy,
+                            None,
+                            None,
                             false,
                             operator,
                             Trie::new(),

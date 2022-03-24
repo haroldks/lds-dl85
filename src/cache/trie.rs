@@ -65,6 +65,7 @@ pub struct Trie {
     pub root: TrieNode,
     pub cachesize: u64,
     pub discrepancy: Option<usize>,
+    pub recursion_count: usize,
     pub max_discrepancy: Option<usize>,
     pub is_done: bool,
 }
@@ -76,6 +77,7 @@ impl Trie {
             root: TrieNode::new((usize::MAX, false)),
             cachesize: 0,
             discrepancy: None,
+            recursion_count: 0,
             max_discrepancy: None,
             is_done: false,
         }
