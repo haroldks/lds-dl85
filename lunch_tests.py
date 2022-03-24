@@ -10,17 +10,17 @@ CONFIG_BASE_DIR = "confs_dir"
 RESULTS_DIR = "CONFS_RESULTS"
 
 # TEST PARAMETERS
-ALLOW_DISCREPANCIES = [True]
+ALLOW_DISCREPANCIES = [True, False]
 USE_INFORMATION_GAIN = [True]
-TIMEOUTS = [10]
+TIMEOUTS = [30, 60, 90]
 PARAMETERS = {
-    "support": 100,
-    "depth": 3,
+    "support": 1,
+    "depth": 9,
 }
 
 # Execution Information
 BIN_FILE = "target/release/sandbox"
-N_THREADS = 8
+N_THREADS = 30
 
 if os.path.exists(RESULTS_DIR):
     shutil.rmtree(RESULTS_DIR)

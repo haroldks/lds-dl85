@@ -36,7 +36,9 @@ def load_json(file_path):
 
 
 def run_test(bin_file, config):
+    print("Run for this conf : ", config)
     subprocess.run([bin_file, '-c', config])
+    print("Run over for this conf :", config)
 
 
 def get_results_as_csv(results_dir, save=None):
