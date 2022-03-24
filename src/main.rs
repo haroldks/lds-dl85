@@ -30,7 +30,7 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
     let operator = ItemsetOpsLong::new(&dataset);
     let cache = Trie::new();
     let mut model = DL85::new(operator.get_infos());
-    println!("--------------------- Run start ---------------------  \n");
+    //printtln!("--------------------- Run start ---------------------  \n");
     let output = model.run(
         cli.support.unwrap(),
         cli.depth.unwrap(),
@@ -45,9 +45,9 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
         operator,
         cache,
     );
-    println!("--------------------- Run over. --------------------- \n");
+    //printtln!("--------------------- Run over. --------------------- \n");
 
-    println!("\n--------------------- Metrics ---------------------");
+    //printtln!("\n--------------------- Metrics ---------------------");
 
     let mut result = Export::new();
 
@@ -74,8 +74,9 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
     result.cache_size = output.0.cachesize;
     result.recursion_count = output.0.recursion_count;
     result.error = output.0.root.data.node_error;
-    println!("Cache Size : {:?} Nodes", output.0.cachesize);
-    println!("Tree Error : {:?} ", output.0.root.data.node_error);
+    result.duration = output.4;
+    //printtln!("Cache Size : {:?} Nodes", output.0.cachesize);
+    //printtln!("Tree Error : {:?} ", output.0.root.data.node_error);
 
     let solution_tuple = get_solution_tree(output.0);
     let metrics = get_data_as_transactions_and_target(filename.clone()).unwrap();
@@ -83,23 +84,24 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
     let accuracy = accuracy(metrics.1.clone(), y_pred.clone());
     result.accuracy = accuracy;
 
-    println!("Accuracy: {:?}", accuracy);
-    println!(
-        "Confusion Matrix: {:?}",
-        confusion_matrix(metrics.1, y_pred, 2)
-    );
 
-    println!("\n--------------------- Tree ---------------------");
-    println!("Depth: {:?}", solution_tuple.2);
-    println!("Tree: {:?}", solution_tuple.0);
+    //printtln!("Accuracy: {:?}", accuracy);
+    //printtln!(
+    //     "Confusion Matrix: {:?}",
+    //     confusion_matrix(metrics.1, y_pred, 2)
+    // );
+
+    //printtln!("\n--------------------- Tree ---------------------");
+    //printtln!("Depth: {:?}", solution_tuple.2);
+    //printtln!("Tree: {:?}", solution_tuple.0);
 
     result.tree_depth = solution_tuple.2;
     result.tree = solution_tuple.0;
 
     if let Some(output) = cli.output {
-        println!("Output path was given. Saving results to: {}.", output);
+        //printtln!("Output path was given. Saving results to: {}.", output);
         if let Err(e) = result.to_json(output) {
-            println!("Error while creating the tree json file : {}", e);
+            //printtln!("Error while creating the tree json file : {}", e);
         }
     }
 
@@ -116,12 +118,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     if cli.input.is_none() || cli.support.is_none() || cli.depth.is_none() {
-        println!("Missing parameters");
+        //printtln!("Missing parameters");
         process::exit(1);
     }
 
     if let Err(e) = run_from_conf(cli) {
-        println!("Error {}, while running from the configuration", e);
+        //printtln!("Error {}, while running from the configuration", e);
     };
     Ok(())
 }

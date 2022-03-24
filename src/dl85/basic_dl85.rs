@@ -94,7 +94,7 @@ impl<'a> DL85 {
         reload_cache: bool,
         mut its_ops: T,
         mut cache: Trie,
-    ) -> (Trie, T, Node, Instant) {
+    ) -> (Trie, T, Node, Instant, u128) {
         let init_distribution = its_ops.classes_cover();
         println!("Train distribution: {:?}", init_distribution);
 
@@ -168,7 +168,8 @@ impl<'a> DL85 {
                 use_info_gain,
                 reload_cache,
             );
-            println!("Duration:  {:?} milliseconds", data.3.elapsed().as_millis());
+            let final_duration = data.3.elapsed().as_millis();
+            println!("Duration:  {:?} milliseconds", final_duration);
 
             if error_save_time > 0 {
                 //thread_handle.stop();
@@ -179,6 +180,7 @@ impl<'a> DL85 {
                     // };
                 }
             }
+            let data = (data.0, data.1, data.2, data.3, final_duration);
             data
         } else {
             let len = candidates_list.len() - 1;
@@ -191,7 +193,7 @@ impl<'a> DL85 {
             }
             cache.max_discrepancy = Some(max_discrepancy);
             cache.discrepancy = Some(0);
-            println!("Max discrepancy: {}", max_discrepancy); // TODO: Change max discrepancy handling
+            // println!("Max discrepancy: {}", max_discrepancy); // TODO: Change max discrepancy handling
             let empty_itemset: Vec<Item> = vec![];
             let mut reload_cache = false;
             let mut now = Instant::now();
@@ -220,7 +222,7 @@ impl<'a> DL85 {
             reload_cache = true;
 
             for discrepancy in 1..max_discrepancy + 1 {
-                println!("Current discrepancy: {}", discrepancy);
+                // println!("Current discrepancy: {}", discrepancy);
                 cache = data.0;
                 cache.discrepancy = Some(discrepancy);
                 let new_parent_node = cache.root.data.clone();
@@ -269,9 +271,10 @@ impl<'a> DL85 {
                     }
                 }
             }
+            let final_duration = data.3.elapsed().as_millis();
             println!(
                 "Duration:  {:?} milliseconds for discrepancy Search",
-                data.3.elapsed().as_millis()
+                final_duration
             );
 
             if error_save_time > 0 {
@@ -283,6 +286,7 @@ impl<'a> DL85 {
                     // };
                 }
             }
+            let data = (data.0, data.1, data.2, data.3, final_duration);
             data
         };
     }
@@ -568,7 +572,7 @@ impl<'a> DL85 {
                 //println!("{:?},  {:?}, {}", current_discrepancy, max_discrepancy, node.is_explored);
                 if (current_discrepancy.unwrap() > max_discrepancy.unwrap()) && node.is_explored {
                     // TODO : Check if it is not possible to stop possible recomputation ? Give a meaning to is explored. Also add case when node is explored fully by puttind discrepancy at max
-                    println!("Here");
+
 
                     node.current_discrepancy = max_discrepancy;
                     return (true, node);

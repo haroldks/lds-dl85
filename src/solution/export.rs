@@ -20,6 +20,7 @@ pub struct Export {
     pub accuracy: f64,
     pub cache_size: u64,
     pub recursion_count: usize,
+    pub duration: u128,
 
     pub tree_depth: u64,
     pub tree: Tree,
@@ -51,7 +52,8 @@ impl Export {
             accuracy: 0.0,
             max_depth: 0,
             nb_features: 0,
-            recursion_count: 0
+            recursion_count: 0,
+            duration: 0
         }
     }
 
