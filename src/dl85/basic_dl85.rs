@@ -168,7 +168,11 @@ impl<'a> DL85 {
                 use_info_gain,
                 reload_cache,
             );
+            cache = data.0;
             let final_duration = data.3.elapsed().as_millis();
+            if final_duration as f64 >= time_limit * 1000f64 {
+                cache.has_timeout = true;
+            }
             println!("Duration:  {:?} milliseconds", final_duration);
 
             if error_save_time > 0 {
@@ -180,7 +184,7 @@ impl<'a> DL85 {
                     // };
                 }
             }
-            let data = (data.0, data.1, data.2, data.3, final_duration);
+            let data = (cache, data.1, data.2, data.3, final_duration);
             data
         } else {
             let len = candidates_list.len() - 1;
@@ -220,6 +224,7 @@ impl<'a> DL85 {
             );
 
             reload_cache = true;
+            let mut has_timeout = false;
 
             for discrepancy in 1..max_discrepancy + 1 {
                 // println!("Current discrepancy: {}", discrepancy);
@@ -266,6 +271,7 @@ impl<'a> DL85 {
                 }
                 if time_limit > 0. {
                     if data.3.elapsed().as_secs() as f64 > time_limit {
+                        has_timeout = true;
                         println!("Finished at discrepancy: {}", discrepancy);
                         break;
                     }
@@ -286,7 +292,9 @@ impl<'a> DL85 {
                     // };
                 }
             }
-            let data = (data.0, data.1, data.2, data.3, final_duration);
+            cache = data.0;
+            cache.has_timeout = has_timeout;
+            let data = (cache, data.1, data.2, data.3, final_duration);
             data
         };
     }

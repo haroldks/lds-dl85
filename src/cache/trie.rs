@@ -68,6 +68,7 @@ pub struct Trie {
     pub recursion_count: usize,
     pub max_discrepancy: Option<usize>,
     pub is_done: bool,
+    pub has_timeout: bool,
 }
 
 #[allow(dead_code)]
@@ -80,6 +81,7 @@ impl Trie {
             recursion_count: 0,
             max_discrepancy: None,
             is_done: false,
+            has_timeout: false
         }
     }
 

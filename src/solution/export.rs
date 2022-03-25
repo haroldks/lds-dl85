@@ -19,6 +19,7 @@ pub struct Export {
     pub error: f64,
     pub accuracy: f64,
     pub cache_size: u64,
+    pub has_timeout: bool,
     pub recursion_count: usize,
     pub duration: u128,
 
@@ -34,6 +35,7 @@ impl Export {
             error: 0.0,
             cache_size: 0,
             timeout: 0.0,
+            has_timeout: false,
             discrepancy: None,
             max_discrepancy: None,
             tree_depth: 0,

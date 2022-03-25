@@ -74,6 +74,7 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
     result.cache_size = output.0.cachesize;
     result.recursion_count = output.0.recursion_count;
     result.error = output.0.root.data.node_error;
+    result.has_timeout = output.0.has_timeout;
     result.duration = output.4;
     //printtln!("Cache Size : {:?} Nodes", output.0.cachesize);
     //printtln!("Tree Error : {:?} ", output.0.root.data.node_error);
