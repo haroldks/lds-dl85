@@ -1,4 +1,5 @@
 import shutil
+import subprocess
 from multiprocessing import Pool
 from functools import partial
 
@@ -19,6 +20,10 @@ PARAMETERS = {
 
 
 # Execution Information
+
+subprocess.run(["cargo", "build", "--release"]) # To build a release version in case of modifications
+
+
 BIN_FILE = "target/release/sandbox"
 N_THREADS = 8
 
