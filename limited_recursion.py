@@ -18,12 +18,12 @@ TO_DROP = [
     "test",
     "random_v2",
     "test_v2",
-    'paper_test',
-    'tic-tac-toe',
-    'paper',
-    'tic-tac-toe_',
-    'tic-tac-toe__',
-    'paper_',
+    "paper_test",
+    "tic-tac-toe",
+    "paper",
+    "tic-tac-toe_",
+    "tic-tac-toe__",
+    "paper_",
 ]
 # LATEX CONSTANTS
 
@@ -68,7 +68,6 @@ def run_limited_recursion(dataset, export_dir="export_v3"):
         )
 
         e, r, f = load_results(out_dis)
-
 
         d = {
             "dataset": basename,
@@ -116,14 +115,18 @@ def load_results(pa):
 def bolding(line):
     d = "DL8.5"
     ls = "LDS-DL8.5"
-    if int(line[('Algorithms Errors', ls)]) < int(line[('Algorithms Errors', d)]):
-        line[('Algorithms Errors', ls)] = f'\\textbf{{{line[("Algorithms Errors", ls)]}}}'
+    if int(line[("Algorithms Errors", ls)]) < int(line[("Algorithms Errors", d)]):
+        line[
+            ("Algorithms Errors", ls)
+        ] = f'\\textbf{{{line[("Algorithms Errors", ls)]}}}'
         return line
-    if int(line[('Algorithms Errors', ls)]) == int(line[('Algorithms Errors', d)]):
-        line[('Algorithms Errors', d)] = f'\\textbf{{{line[("Algorithms Errors", d)]}}}'
-        line[('Algorithms Errors', ls)] = f'\\textbf{{{line[("Algorithms Errors", ls)]}}}'
+    if int(line[("Algorithms Errors", ls)]) == int(line[("Algorithms Errors", d)]):
+        line[("Algorithms Errors", d)] = f'\\textbf{{{line[("Algorithms Errors", d)]}}}'
+        line[
+            ("Algorithms Errors", ls)
+        ] = f'\\textbf{{{line[("Algorithms Errors", ls)]}}}'
         return line
-    line[('Algorithms Errors', d)] = f'\\textbf{{{line[("Algorithms Errors", d)]}}}'
+    line[("Algorithms Errors", d)] = f'\\textbf{{{line[("Algorithms Errors", d)]}}}'
     return line
 
 
@@ -157,12 +160,20 @@ def main():
     reduced.drop(columns=["recursion_limit_dl85"], inplace=True)
     cols = ["recursion_limit_lds", "dl85_error", "lds_error"]
     reduced = reduced[cols]
-    reduced.rename(columns={"recursion_limit_lds": "Recursion budget", "lds_error": "LDS-DL8.5", "dl85_error": "DL8.5"}, inplace=True)
+    reduced.rename(
+        columns={
+            "recursion_limit_lds": "Recursion budget",
+            "lds_error": "LDS-DL8.5",
+            "dl85_error": "DL8.5",
+        },
+        inplace=True,
+    )
     reduced = reduced.astype({"LDS-DL8.5": int, "DL8.5": int}, errors="raise")
     reduced = reduced.astype({"LDS-DL8.5": str, "DL8.5": str}, errors="raise")
-    reduced.columns =  pd.MultiIndex.from_tuples(zip(itertools.repeat("Algorithms Errors"), list(reduced.columns)))
+    reduced.columns = pd.MultiIndex.from_tuples(
+        zip(itertools.repeat("Algorithms Errors"), list(reduced.columns))
+    )
     reduced = reduced.apply(lambda x: bolding(x), axis=1)
-
 
     styler = reduced.style
     styler.format_index(escape="latex", axis=1).format_index(escape="latex", axis=0)

@@ -12,16 +12,14 @@ RESULTS_DIR = "optimal_results"
 ALLOW_DISCREPANCIES = [True, False]
 DEPTHS = [3, 4]
 
-PARAMETERS = {
-    "support": 1,
-    "use_information_gain": True,
-    "timeout": 0
-}
+PARAMETERS = {"support": 1, "use_information_gain": True, "timeout": 0}
 
 
 # Execution Information
 
-subprocess.run(["cargo", "build", "--release"]) # To build a release version in case of modifications
+subprocess.run(
+    ["cargo", "build", "--release"]
+)  # To build a release version in case of modifications
 
 
 BIN_FILE = "target/release/sandbox"

@@ -81,7 +81,7 @@ impl Trie {
             recursion_count: 0,
             max_discrepancy: None,
             is_done: false,
-            has_timeout: false
+            has_timeout: false,
         }
     }
 

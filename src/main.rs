@@ -85,7 +85,6 @@ fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
     let accuracy = accuracy(metrics.1.clone(), y_pred.clone());
     result.accuracy = accuracy;
 
-
     //printtln!("Accuracy: {:?}", accuracy);
     //printtln!(
     //     "Confusion Matrix: {:?}",
