@@ -188,7 +188,7 @@ impl<'a> DL85 {
             let len = candidates_list.len() - 1;
             let mut max_discrepancy = len;
             for i in 1..max_depth {
-                max_discrepancy += len - i as usize;
+                max_discrepancy +=  len.saturating_sub(i as usize);
             }
             if discrepancy_limit.is_some() {
                 max_discrepancy = min(discrepancy_limit.unwrap(), max_discrepancy);
