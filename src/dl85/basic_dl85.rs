@@ -276,9 +276,10 @@ impl<'a> DL85 {
                 }
                 disc = disc*2;
             }
-            if disc < max_discrepancy && ((time_limit == 0.) || ((time_limit >0.) && ((data.3.elapsed().as_secs() as f64) < time_limit))){
+
+            if data.0.discrepancy.unwrap() < max_discrepancy && (((time_limit as u64) == 0) || ((time_limit >0.) && ((data.3.elapsed().as_secs() as f64) < time_limit))){
                 cache = data.0;
-                cache.discrepancy = Some(disc);
+                cache.discrepancy = Some(max_discrepancy);
                 let new_parent_node = cache.root.data.clone();
                 let current_error = cache.root.data.node_error;
                 let new_upper_bound = match current_error < max_error {
@@ -299,7 +300,7 @@ impl<'a> DL85 {
                     max_depth,
                     use_discrepancy,
                     Some(0),
-                    Some(disc as u64),
+                    Some(max_discrepancy as u64),
                     rlimit,
                     min_support,
                     new_upper_bound,
@@ -309,7 +310,16 @@ impl<'a> DL85 {
                     use_info_gain,
                     reload_cache,
                 );
-                println!("Finished at discrepancy: {}", disc);
+                if time_limit > 0. {
+                    if data.3.elapsed().as_secs() as f64 > time_limit {
+                        has_timeout = true;
+                        println!("Finished at discrepancy: {}", max_discrepancy);
+                    }
+                }
+                else {
+
+                }
+                println!("Finished at discrepancy: {}", max_discrepancy);
             }
             // for discrepancy in 1..max_discrepancy + 1 {
             //     // println!("Current discrepancy: {}", discrepancy);
