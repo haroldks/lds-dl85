@@ -12,7 +12,7 @@ RESULTS_DIR = "optimal_results"
 ALLOW_DISCREPANCIES = [True, False]
 DEPTHS = [3, 4]
 
-PARAMETERS = {"support": 1, "use_information_gain": True, "timeout": 0}
+PARAMETERS = {"support": 1, "use_information_gain": True, "timeout": 600}
 
 
 # Execution Information

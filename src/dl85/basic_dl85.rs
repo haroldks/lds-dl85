@@ -195,7 +195,7 @@ impl<'a> DL85 {
             }
             cache.max_discrepancy = Some(max_discrepancy);
             cache.discrepancy = Some(0);
-            // println!("Max discrepancy: {}", max_discrepancy); // TODO: Change max discrepancy handling
+            println!("Max discrepancy: {}", max_discrepancy); // TODO: Change max discrepancy handling
             let empty_itemset: Vec<Item> = vec![];
             let mut reload_cache = false;
             let mut now = Instant::now();
@@ -223,11 +223,11 @@ impl<'a> DL85 {
 
             reload_cache = true;
             let mut has_timeout = false;
-
-            for discrepancy in 1..max_discrepancy + 1 {
-                // println!("Current discrepancy: {}", discrepancy);
+            let mut disc = 1;
+            while disc <= max_discrepancy {
+                println!("Current discrepancy: {}", disc);
                 cache = data.0;
-                cache.discrepancy = Some(discrepancy);
+                cache.discrepancy = Some(disc);
                 let new_parent_node = cache.root.data.clone();
                 let current_error = cache.root.data.node_error;
                 let new_upper_bound = match current_error < max_error {
@@ -248,7 +248,7 @@ impl<'a> DL85 {
                     max_depth,
                     use_discrepancy,
                     Some(0),
-                    Some(discrepancy as u64),
+                    Some(disc as u64),
                     rlimit,
                     min_support,
                     new_upper_bound,
@@ -270,11 +270,98 @@ impl<'a> DL85 {
                 if time_limit > 0. {
                     if data.3.elapsed().as_secs() as f64 > time_limit {
                         has_timeout = true;
-                        println!("Finished at discrepancy: {}", discrepancy);
+                        println!("Finished at discrepancy: {}", disc);
                         break;
                     }
                 }
+                disc = disc*2;
             }
+            if disc < max_discrepancy && ((time_limit == 0.) || ((time_limit >0.) && ((data.3.elapsed().as_secs() as f64) < time_limit))){
+                cache = data.0;
+                cache.discrepancy = Some(disc);
+                let new_parent_node = cache.root.data.clone();
+                let current_error = cache.root.data.node_error;
+                let new_upper_bound = match current_error < max_error {
+                    true => current_error,
+                    _ => max_error,
+                }; // New way to prune more.
+                its_ops = data.1;
+                its_ops.reset();
+                now = data.3;
+                data = DL85::recursion(
+                    cache,
+                    its_ops,
+                    empty_itemset.clone(),
+                    <usize>::MAX,
+                    candidates_list.clone(),
+                    new_upper_bound,
+                    0,
+                    max_depth,
+                    use_discrepancy,
+                    Some(0),
+                    Some(disc as u64),
+                    rlimit,
+                    min_support,
+                    new_upper_bound,
+                    new_parent_node,
+                    now,
+                    time_limit,
+                    use_info_gain,
+                    reload_cache,
+                );
+                println!("Finished at discrepancy: {}", disc);
+            }
+            // for discrepancy in 1..max_discrepancy + 1 {
+            //     // println!("Current discrepancy: {}", discrepancy);
+            //     cache = data.0;
+            //     cache.discrepancy = Some(discrepancy);
+            //     let new_parent_node = cache.root.data.clone();
+            //     let current_error = cache.root.data.node_error;
+            //     let new_upper_bound = match current_error < max_error {
+            //         true => current_error,
+            //         _ => max_error,
+            //     }; // New way to prune more.
+            //     its_ops = data.1;
+            //     its_ops.reset();
+            //     now = data.3;
+            //     data = DL85::recursion(
+            //         cache,
+            //         its_ops,
+            //         empty_itemset.clone(),
+            //         <usize>::MAX,
+            //         candidates_list.clone(),
+            //         new_upper_bound,
+            //         0,
+            //         max_depth,
+            //         use_discrepancy,
+            //         Some(0),
+            //         Some(discrepancy as u64),
+            //         rlimit,
+            //         min_support,
+            //         new_upper_bound,
+            //         new_parent_node,
+            //         now,
+            //         time_limit,
+            //         use_info_gain,
+            //         reload_cache,
+            //     );
+            //     if data.0.root.data.node_error.approx_eq(
+            //         0.,
+            //         F64Margin {
+            //             ulps: 2,
+            //             epsilon: 0.0,
+            //         },
+            //     ) {
+            //         break;
+            //     }
+            //     if time_limit > 0. {
+            //         if data.3.elapsed().as_secs() as f64 > time_limit {
+            //             has_timeout = true;
+            //             println!("Finished at discrepancy: {}", discrepancy);
+            //             break;
+            //         }
+            //     }
+            // }
             let final_duration = data.3.elapsed().as_millis();
             println!(
                 "Duration:  {:?} milliseconds for discrepancy Search",
