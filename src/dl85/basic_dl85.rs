@@ -138,11 +138,9 @@ impl<'a> DL85 {
         }
 
         let rlimit = match recursion_limit.is_some() {
-            true => {recursion_limit.unwrap()}
-            _ => {0}
-
+            true => recursion_limit.unwrap(),
+            _ => 0,
         };
-
 
         return if !use_discrepancy {
             let empty_itemset: Vec<Item> = vec![];
@@ -192,7 +190,7 @@ impl<'a> DL85 {
             for i in 1..max_depth {
                 max_discrepancy += len - i as usize;
             }
-            if discrepancy_limit.is_some(){
+            if discrepancy_limit.is_some() {
                 max_discrepancy = min(discrepancy_limit.unwrap(), max_discrepancy);
             }
             cache.max_discrepancy = Some(max_discrepancy);
@@ -325,7 +323,7 @@ impl<'a> DL85 {
         unsafe {
             CURRENT_ERROR = cache.root.data.node_error;
         }
-        if recursion_limit > 0 && cache.recursion_count >= recursion_limit{
+        if recursion_limit > 0 && cache.recursion_count >= recursion_limit {
             parent_node_data.is_explored = false;
             parent_node_data.node_error = parent_node_data.leaf_error;
             cache.update(&current_itemset, parent_node_data); // New
@@ -358,7 +356,7 @@ impl<'a> DL85 {
                 out_of_time,
                 reload_cache,
                 None,
-                discrepancy_limit
+                discrepancy_limit,
             ),
             _ => DL85::check_if_stop_condition_reached(
                 parent_node_data,
@@ -370,7 +368,7 @@ impl<'a> DL85 {
                 out_of_time,
                 reload_cache,
                 max_discrepancy,
-                discrepancy_limit
+                discrepancy_limit,
             ),
         };
 
@@ -400,23 +398,18 @@ impl<'a> DL85 {
         }
 
         for (idx, attribute) in new_candidates.iter().enumerate() {
-
-            if recursion_limit > 0 && cache.recursion_count >= recursion_limit{
-                break
+            if recursion_limit > 0 && cache.recursion_count >= recursion_limit {
+                break;
             }
 
             if use_discrepancy && idx as u64 > max_discrepancy.unwrap() {
                 break;
             }
 
-
             let child_discrepancy = match use_discrepancy {
-                false => { None }
-                _ => { Some(max_discrepancy.unwrap() -  idx as u64)}
+                false => None,
+                _ => Some(max_discrepancy.unwrap() - idx as u64),
             };
-
-
-
 
             let items: Vec<Item> = vec![(*attribute, false), (*attribute, true)];
             let _first_item_sup = its_op.intersection_cover(&items[0]); // Here current is supposed to be updated
@@ -440,7 +433,6 @@ impl<'a> DL85 {
                 depth + 1,
                 max_depth,
                 use_discrepancy,
-
                 child_discrepancy,
                 discrepancy_limit,
                 recursion_limit,
@@ -584,13 +576,12 @@ impl<'a> DL85 {
         if reload_cache {
             if discrepancy.is_some() {
                 //println!("{:?},  {:?}, {}", current_discrepancy, max_discrepancy, node.is_explored);
-                if node.current_discrepancy.unwrap() >= max_discrepancy { // FIXME: && node.is_explored
+                if node.current_discrepancy.unwrap() >= max_discrepancy {
+                    // FIXME: && node.is_explored
                     // TODO : Check if it is not possible to stop possible recomputation ? Give a meaning to is explored. Also add case when node is explored fully by puttind discrepancy at max
-                    if node.lower_bound <= upper_bond{
+                    if node.lower_bound <= upper_bond {
                         return (true, node);
                     }
-
-
                 }
                 if node.node_error.approx_eq(
                     0.,

@@ -55,7 +55,7 @@ impl Export {
             max_depth: 0,
             nb_features: 0,
             recursion_count: 0,
-            duration: 0
+            duration: 0,
         }
     }
 
