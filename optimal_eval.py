@@ -6,8 +6,8 @@ from functools import partial
 from utils import *
 
 DATASET_DIR = "datasets"
-CONFIG_BASE_DIR = "optimal_runs_conf"
-RESULTS_DIR = "optimal_results"
+CONFIG_BASE_DIR = "cached_optimal_runs_conf"
+RESULTS_DIR = "cached_optimal_results_inc_1"
 
 ALLOW_DISCREPANCIES = [True, False]
 DEPTHS = [3, 4]
@@ -15,7 +15,7 @@ DEPTHS = [3, 4]
 PARAMETERS = {
     "support": 1,
     "use_information_gain": True,
-    "timeout": 0
+    "timeout": 600
 }
 
 

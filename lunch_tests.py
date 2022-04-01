@@ -6,8 +6,8 @@ from utils import *
 
 # Directories constants
 DATASET_DIR = "datasets"
-CONFIG_BASE_DIR = "confs_dir"
-RESULTS_DIR = "CONFS_RESULTS"
+CONFIG_BASE_DIR = "cached_confs_dir"
+RESULTS_DIR = "cached_CONFS_RESULTS"
 
 # TEST PARAMETERS
 ALLOW_DISCREPANCIES = [True, False]
@@ -18,9 +18,14 @@ PARAMETERS = {
     "depth": 9,
 }
 
+
+
 # Execution Information
+subprocess.run(["cargo", "build", "--release"]) # To build a release version in case of modifications
+
+
 BIN_FILE = "target/release/sandbox"
-N_THREADS = 30
+N_THREADS = 15
 
 if os.path.exists(RESULTS_DIR):
     shutil.rmtree(RESULTS_DIR)
