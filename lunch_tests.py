@@ -6,8 +6,8 @@ from utils import *
 
 # Directories constants
 DATASET_DIR = "datasets"
-CONFIG_BASE_DIR = "confs_dir"
-RESULTS_DIR = "CONFS_RESULTS"
+CONFIG_BASE_DIR = "cached_confs_dir"
+RESULTS_DIR = "cached_CONFS_RESULTS"
 
 # TEST PARAMETERS
 ALLOW_DISCREPANCIES = [True, False]
@@ -18,9 +18,14 @@ PARAMETERS = {
     "depth": 9,
 }
 
+
+
 # Execution Information
+subprocess.run(["cargo", "build", "--release"]) # To build a release version in case of modifications
+
+
 BIN_FILE = "target/release/sandbox"
-N_THREADS = 30
+N_THREADS = 15
 
 if os.path.exists(RESULTS_DIR):
     shutil.rmtree(RESULTS_DIR)
@@ -39,9 +44,7 @@ for allow_dis in ALLOW_DISCREPANCIES:
     for use_ig in USE_INFORMATION_GAIN:
         for time in TIMEOUTS:
             dir_name = f"{CONFIG_BASE_DIR}/confs_time_{time}_allow_dis_{allow_dis}_use_ig_{use_ig}"
-            result_dir = (
-                f"{RESULTS_DIR}/confs_time_{time}_allow_dis_{allow_dis}_use_ig_{use_ig}"
-            )
+            result_dir = f"{RESULTS_DIR}/confs_time_{time}_allow_dis_{allow_dis}_use_ig_{use_ig}"
             if os.path.exists(dir_name):
                 shutil.rmtree(dir_name)
 

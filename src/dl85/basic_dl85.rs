@@ -676,7 +676,7 @@ impl<'a> DL85 {
                 if node.current_discrepancy.unwrap() >= max_discrepancy {
                     // FIXME: && node.is_explored
                     // TODO : Check if it is not possible to stop possible recomputation ? Give a meaning to is explored. Also add case when node is explored fully by puttind discrepancy at max
-                    if node.lower_bound <= upper_bond {
+                    if upper_bond <= node.lower_bound {
                         return (true, node);
                     }
                 }
@@ -727,6 +727,7 @@ impl<'a> DL85 {
                 epsilon: 0.0,
             },
         ) {
+            node.lower_bound = upper_bond;
             node.node_error = node.leaf_error;
             node.is_leaf = true;
             node.is_explored = true;
