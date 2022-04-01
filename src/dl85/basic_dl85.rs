@@ -158,7 +158,7 @@ impl<'a> DL85 {
                 max_depth,
                 use_discrepancy,
                 None,
-                None,
+                0,
                 rlimit,
                 min_support,
                 max_error,
@@ -197,6 +197,9 @@ impl<'a> DL85 {
             }
             cache.max_discrepancy = Some(max_discrepancy);
             cache.discrepancy = Some(0);
+            cache.root.data.current_discrepancy = Some(0);
+            let mut init_node = Node::new(<usize>::MAX, 0);
+            init_node.current_discrepancy = Some(0);
             // println!("Max discrepancy: {}", max_discrepancy); // TODO: Change max discrepancy handling
             let empty_itemset: Vec<Item> = vec![];
             let mut reload_cache = false;
@@ -212,11 +215,11 @@ impl<'a> DL85 {
                 max_depth,
                 use_discrepancy,
                 Some(0),
-                Some(0),
+                max_discrepancy as u64,
                 rlimit,
                 min_support,
                 max_error,
-                Node::new(<usize>::MAX, 0),
+                init_node,
                 now,
                 time_limit,
                 use_info_gain,
@@ -225,7 +228,6 @@ impl<'a> DL85 {
 
             reload_cache = true;
             let mut has_timeout = false;
-
             for discrepancy in 1..max_discrepancy + 1 {
                 // println!("Current discrepancy: {}", discrepancy);
                 cache = data.0;
@@ -249,8 +251,8 @@ impl<'a> DL85 {
                     0,
                     max_depth,
                     use_discrepancy,
-                    Some(0),
                     Some(discrepancy as u64),
+                    max_discrepancy as u64,
                     rlimit,
                     min_support,
                     new_upper_bound,
@@ -309,8 +311,8 @@ impl<'a> DL85 {
         depth: u64,
         max_depth: u64,
         use_discrepancy: bool,
-        current_discrepancy: Option<u64>,
-        mut max_discrepancy: Option<u64>,
+        max_discrepancy: Option<u64>,
+        discrepancy_limit: u64,
         recursion_limit: usize,
         min_support: u64,
         max_error: f64,
@@ -329,7 +331,6 @@ impl<'a> DL85 {
             cache.update(&current_itemset, parent_node_data); // New
             return (cache, its_op, parent_node_data, instant);
         }
-
 
         cache.recursion_count += 1;
         let mut child_upper_bound = upper_bound;
@@ -357,7 +358,7 @@ impl<'a> DL85 {
                 out_of_time,
                 reload_cache,
                 None,
-                None,
+                discrepancy_limit
             ),
             _ => DL85::check_if_stop_condition_reached(
                 parent_node_data,
@@ -368,8 +369,8 @@ impl<'a> DL85 {
                 max_depth,
                 out_of_time,
                 reload_cache,
-                current_discrepancy,
                 max_discrepancy,
+                discrepancy_limit
             ),
         };
 
@@ -404,32 +405,30 @@ impl<'a> DL85 {
                 break
             }
 
+            if use_discrepancy && idx as u64 > max_discrepancy.unwrap() {
+                break;
+            }
+
+
             let child_discrepancy = match use_discrepancy {
                 false => { None }
-                _ => { Some(current_discrepancy.unwrap() + idx as u64)}
+                _ => { Some(max_discrepancy.unwrap() -  idx as u64)}
             };
 
 
-            // if use_discrepancy {
-            //     max_discrepancy = min(max_discrepancy, Some((new_candidates.len()) as u64));
-            // }
 
-            if use_discrepancy && child_discrepancy.unwrap() > max_discrepancy.unwrap() {
-                break;
-            }
 
             let items: Vec<Item> = vec![(*attribute, false), (*attribute, true)];
             let _first_item_sup = its_op.intersection_cover(&items[0]); // Here current is supposed to be updated
             let mut child_item_set = current_itemset.clone();
             child_item_set.push(items[0]);
             child_item_set.sort_unstable();
-
             let mut first_node_data = DL85::retrieve_cache_emplacement_for_current_its(
                 &mut cache,
                 &mut its_op,
                 &items[0],
                 depth,
-                current_discrepancy,
+                max_discrepancy,
             ); // Error computation // cache_ref, item_ref, depth
             let data = DL85::recursion(
                 cache,
@@ -441,8 +440,9 @@ impl<'a> DL85 {
                 depth + 1,
                 max_depth,
                 use_discrepancy,
+
                 child_discrepancy,
-                max_discrepancy,
+                discrepancy_limit,
                 recursion_limit,
                 min_support,
                 max_error,
@@ -470,7 +470,7 @@ impl<'a> DL85 {
                     &mut its_op,
                     &items[1],
                     depth,
-                    current_discrepancy,
+                    max_discrepancy,
                 ); // Error computation // cache_ref, item_ref, depth
                 let remaining_ub = child_upper_bound - first_split_error;
                 child_item_set.sort_unstable();
@@ -486,7 +486,7 @@ impl<'a> DL85 {
                     max_depth,
                     use_discrepancy,
                     child_discrepancy,
-                    max_discrepancy,
+                    discrepancy_limit,
                     recursion_limit,
                     min_support,
                     max_error,
@@ -512,6 +512,7 @@ impl<'a> DL85 {
                     parent_node_data.node_error = feature_error;
                     parent_node_data.test = *attribute;
                     child_upper_bound = feature_error;
+
                     cache.update(&current_itemset, parent_node_data);
                 }
             } else {
@@ -525,6 +526,11 @@ impl<'a> DL85 {
                     return (cache, its_op, parent_node_data, instant);
                 }
                 continue;
+            }
+
+            if idx == new_candidates.len() - 1 {
+                parent_node_data.current_discrepancy = Some(discrepancy_limit);
+                cache.update(&current_itemset, parent_node_data);
             }
         }
         cache.is_done = true;
@@ -565,8 +571,8 @@ impl<'a> DL85 {
         max_depth: u64,
         out_of_time: bool,
         reload_cache: bool,
-        current_discrepancy: Option<u64>,
-        max_discrepancy: Option<u64>,
+        discrepancy: Option<u64>,
+        max_discrepancy: u64,
     ) -> (bool, Node) {
         // TODO: Here we check if the node already exists. If not we create new one and return his address
         if out_of_time {
@@ -576,14 +582,15 @@ impl<'a> DL85 {
         }
 
         if reload_cache {
-            if current_discrepancy.is_some() {
+            if discrepancy.is_some() {
                 //println!("{:?},  {:?}, {}", current_discrepancy, max_discrepancy, node.is_explored);
-                if (current_discrepancy.unwrap() > max_discrepancy.unwrap()) && node.is_explored {
+                if node.current_discrepancy.unwrap() >= max_discrepancy { // FIXME: && node.is_explored
                     // TODO : Check if it is not possible to stop possible recomputation ? Give a meaning to is explored. Also add case when node is explored fully by puttind discrepancy at max
+                    if node.lower_bound <= upper_bond{
+                        return (true, node);
+                    }
 
 
-                    node.current_discrepancy = max_discrepancy;
-                    return (true, node);
                 }
                 if node.node_error.approx_eq(
                     0.,
@@ -592,27 +599,30 @@ impl<'a> DL85 {
                         epsilon: 0.0,
                     },
                 ) {
+                    node.lower_bound = upper_bond;
                     return (true, node);
                 }
             } else {
                 if node.is_explored {
+                    node.lower_bound = upper_bond;
                     return (true, node);
                 }
                 node.node_error = <f64>::MAX;
             }
         }
 
-        if current_discrepancy.is_some() {
-            if (current_discrepancy.unwrap() > max_discrepancy.unwrap()) && node.is_explored {
-                // TODO / Most likely check if node discrepancy is higher to max discrepancy
-                return (true, node);
-            }
-        }
+        // if discrepancy.is_some() {
+        //     if (current_discrepancy.unwrap() > max_discrepancy.unwrap()) && node.is_explored {
+        //         // TODO / Most likely check if node discrepancy is higher to max discrepancy
+        //         return (true, node);
+        //     }
+        // }
 
         if depth == max_depth || current_support < (2 * min_support) as u64 {
             node.node_error = node.leaf_error;
             node.is_leaf = true;
             node.is_explored = true;
+            node.lower_bound = upper_bond;
             return (true, node);
         }
 
@@ -629,6 +639,7 @@ impl<'a> DL85 {
                 epsilon: 0.0,
             },
         ) {
+            node.lower_bound = upper_bond;
             node.node_error = node.leaf_error;
             node.is_leaf = true;
             node.is_explored = true;
@@ -648,7 +659,6 @@ impl<'a> DL85 {
         let mut its = its_op.get_current();
         its.sort_unstable();
         let mut node = cache_ref.insert(&its);
-
         if node.is_new {
             let error = its_op.leaf_misclassication_error();
             node.data = Node::new(item.0, depth);
