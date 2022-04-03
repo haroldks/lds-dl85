@@ -28,7 +28,7 @@ impl Node {
             current_discrepancy: None,
             leaf_error: <f64>::MAX,
             node_error: <f64>::MAX,
-            lower_bound: -1f64,
+            lower_bound: 0f64,
             max_class: <usize>::MAX,
             is_leaf: false,
         }
