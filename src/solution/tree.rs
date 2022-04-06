@@ -1,12 +1,7 @@
+use crate::mining::types_def::Attribute;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Formatter;
-use std::fs::File;
-use std::io::Error;
-
-use serde::{Deserialize, Serialize};
-use serde_json::to_writer;
-
-use crate::mining::types_def::Attribute;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tree {
@@ -32,13 +27,6 @@ impl Tree {
             leaf_error: <f64>::INFINITY,
             current_depth: <u64>::MAX,
         }
-    }
-
-    pub fn to_json(&self, filename: String) -> Result<(), Error> {
-        if let Err(e) = to_writer(&File::create(filename)?, &self) {
-            println!("File Creating error: {}", e.to_string());
-        };
-        Ok(())
     }
 }
 
