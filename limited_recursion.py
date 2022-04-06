@@ -5,7 +5,7 @@ from multiprocessing import Pool
 # RUN CONSTANTS
 
 BASE_DIR = "datasets"
-BIN_FILE = "target/release/sandbox"
+BIN_FILE = "target/release/lds-dl85"
 N_THREADS = 8
 
 # DATA FORMATTING CONSTANTS
@@ -131,6 +131,10 @@ def bolding(line):
 
 
 def main():
+
+    subprocess.run(
+        ["cargo", "build", "--release"]
+    )  # To build a release version in case of modifications
     files = list()
     for file in os.listdir(BASE_DIR):
         path = os.path.join(BASE_DIR, file)

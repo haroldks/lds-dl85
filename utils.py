@@ -6,7 +6,7 @@ import pandas as pd
 
 def generate_config_files(
     datasets_dir, params, out_dir, results_dir
-):  # TODO: Allows Multiple timeout ?
+):
     files = os.listdir(datasets_dir)
 
     for file in files:
