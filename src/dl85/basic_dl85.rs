@@ -187,9 +187,8 @@ impl<'a> DL85 {
         } else {
             let len = candidates_list.len() - 1;
             let mut max_discrepancy = len;
-            for i in 1..max_depth {
-                max_discrepancy += len.saturating_sub(i as usize);
-            }
+            max_discrepancy = DL85::get_true_discrepancy_limit(len, max_depth);
+
             if discrepancy_limit.is_some() {
                 max_discrepancy = min(discrepancy_limit.unwrap(), max_discrepancy);
             }
@@ -226,8 +225,12 @@ impl<'a> DL85 {
 
             reload_cache = true;
             let mut has_timeout = false;
-            for discrepancy in 1..max_discrepancy + 1 {
-                // println!("Current discrepancy: {}", discrepancy);
+
+            let mut discrepancy = 1;
+            let mut is_last = false;
+            // println!("Max Discrepancy : {}", max_discrepancy);
+            while discrepancy <= max_discrepancy{
+                // println!("Current Discrepancy : {}", discrepancy);
                 cache = data.0;
                 cache.discrepancy = Some(discrepancy);
                 let new_parent_node = cache.root.data.clone();
@@ -235,7 +238,7 @@ impl<'a> DL85 {
                 let new_upper_bound = match current_error < max_error {
                     true => current_error,
                     _ => max_error,
-                }; // New way to prune more.
+                };
                 its_ops = data.1;
                 its_ops.reset();
                 now = data.3;
@@ -276,7 +279,17 @@ impl<'a> DL85 {
                         break;
                     }
                 }
+
+                if is_last {
+                    break;
+                }
+                discrepancy = DL85::augment_discrepancy(discrepancy, 2);
+                if discrepancy >= max_discrepancy{
+                    discrepancy = max_discrepancy;
+                    is_last = true;
+                }
             }
+
             let final_duration = data.3.elapsed().as_millis();
             println!(
                 "Duration:  {:?} milliseconds for discrepancy Search",
@@ -309,7 +322,7 @@ impl<'a> DL85 {
         depth: u64,
         max_depth: u64,
         use_discrepancy: bool,
-        max_discrepancy: Option<u64>,
+        mut max_discrepancy: Option<u64>,
         discrepancy_limit: u64,
         recursion_limit: usize,
         min_support: u64,
@@ -395,6 +408,12 @@ impl<'a> DL85 {
             let data = DL85::sort_by_information_gain(its_op, new_candidates);
             its_op = data.0;
             new_candidates = data.1;
+        }
+        let mut real_disc_limit = <usize>::MAX;
+        if use_discrepancy {
+            real_disc_limit =
+                DL85::get_true_discrepancy_limit(new_candidates.len(), max_depth - depth);
+            max_discrepancy = Some(min(max_discrepancy.unwrap(), real_disc_limit as u64));
         }
 
         for (idx, attribute) in new_candidates.iter().enumerate() {
@@ -519,12 +538,20 @@ impl<'a> DL85 {
                 }
                 continue;
             }
-
-            if idx == new_candidates.len() - 1 {
-                parent_node_data.current_discrepancy = Some(discrepancy_limit);
-                cache.update(&current_itemset, parent_node_data);
-            }
         }
+
+        if use_discrepancy && (parent_node_data.node_error.approx_eq(
+            0.,
+            F64Margin {
+                ulps: 2,
+                epsilon: 0.0,
+            },
+        ) || real_disc_limit as u64 == max_discrepancy.unwrap())
+        {
+            parent_node_data.current_discrepancy = Some(discrepancy_limit);
+            cache.update(&current_itemset, parent_node_data);
+        }
+
         cache.is_done = true;
         (cache, its_op, parent_node_data, instant)
     }
@@ -694,5 +721,23 @@ impl<'a> DL85 {
         } else {
             (false, instant)
         };
+    }
+
+    fn get_true_discrepancy_limit(nb_successors: usize, remaining_depth: u64) -> usize {
+        let mut max_discrepancy = nb_successors;
+        for i in 1..remaining_depth {
+            max_discrepancy += nb_successors.saturating_sub(i as usize);
+        }
+        return max_discrepancy;
+    }
+    // Two scheme 1 : for incremental and 2 for exponential
+    fn augment_discrepancy(actual: usize, scheme: u8) -> usize {
+        let next = match scheme {
+
+            1 => {actual +1},
+            2 => {actual * 2}
+            _ => {actual + 1}
+        };
+        return next;
     }
 }
