@@ -1,7 +1,6 @@
 import shutil
-import subprocess
-from multiprocessing import Pool
 from functools import partial
+from multiprocessing import Pool
 
 from utils import *
 
@@ -12,19 +11,16 @@ RESULTS_DIR = "cached_optimal_results_inc_1"
 ALLOW_DISCREPANCIES = [True, False]
 DEPTHS = [3, 4]
 
-PARAMETERS = {
-    "support": 1,
-    "use_information_gain": True,
-    "timeout": 600
-}
-
+PARAMETERS = {"support": 1, "use_information_gain": True, "timeout": 600}
 
 # Execution Information
 
-subprocess.run(["cargo", "build", "--release"]) # To build a release version in case of modifications
+subprocess.run(
+    ["cargo", "build", "--release"]
+)  # To build a release version in case of modifications
 
 
-BIN_FILE = "target/release/sandbox"
+BIN_FILE = "target/release/lds-dl85"
 N_THREADS = 8
 
 if os.path.exists(RESULTS_DIR):
