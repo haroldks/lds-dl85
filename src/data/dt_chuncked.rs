@@ -4,7 +4,7 @@ use std::io::{BufRead, BufReader, Error};
 
 use bit_vec::BitVec;
 
-pub struct DataChuncked {
+pub struct DataChunked {
     pub filename: String,
     pub ntransactions: usize,
     pub nattributes: usize,
@@ -13,29 +13,32 @@ pub struct DataChuncked {
     pub target: Vec<Vec<BitVec>>,
 }
 
-
-impl DataChuncked {
+#[allow(dead_code)]
+impl DataChunked {
     // TODO: add comments for readability
-    pub fn new(filename: String) -> Result<DataChuncked, Error> {
+    pub fn new(filename: String) -> Result<DataChunked, Error> {
         let input = File::open(&filename)?; //Error Handling for missing filename
 
         let buffered = BufReader::new(input); // Buffer for the file
 
         let data_lines: Vec<String> = buffered.lines().map(|x| x.unwrap()).collect();
 
-        DataChuncked::data_chuncked(data_lines, filename)
+        DataChunked::data_chunked(data_lines, filename)
     }
 
-
-    fn data_chuncked(data: Vec<String>, filename: String) -> Result<DataChuncked, Error> {
-        let nattributes = data[0].split_ascii_whitespace().collect::<Vec<&str>>().len() - 1;
+    fn data_chunked(data: Vec<String>, filename: String) -> Result<DataChunked, Error> {
+        let nattributes = data[0]
+            .split_ascii_whitespace()
+            .collect::<Vec<&str>>()
+            .len()
+            - 1;
         let ntransactions = data.len();
 
         let mut nchunks = 1;
         if ntransactions > 64 {
             nchunks = match ntransactions % 64 {
-                0 => { ntransactions / 64 }
-                _ => { (ntransactions / 64) + 1 }
+                0 => ntransactions / 64,
+                _ => (ntransactions / 64) + 1,
             };
         }
         let mut inputs = vec![vec![BitVec::from_elem(64, false); nchunks]; nattributes];
@@ -45,17 +48,19 @@ impl DataChuncked {
             let line = line.split_ascii_whitespace().collect::<Vec<&str>>();
             for (j, l) in line.iter().enumerate() {
                 match j {
-                    0 => { target.push(l.parse::<usize>().unwrap()) }
-                    _ => {
-                        inputs[(j - 1)][i / 64].set(i % 64, l == &"1")
-                    }
+                    0 => target.push(l.parse::<usize>().unwrap()),
+                    _ => inputs[(j - 1)][i / 64].set(i % 64, l == &"1"),
                 }
             }
         }
 
-        let nclasses = target.iter().collect::<HashSet<_>>().len();
+        let mut nclasses = target.iter().collect::<HashSet<_>>().len();
 
         let mut targets_bv = vec![];
+
+        if nclasses < 2 {
+            nclasses = 2;
+        }
 
         for _ in 0..nclasses {
             targets_bv.push(vec![BitVec::from_elem(64, false); nchunks])
@@ -65,6 +70,13 @@ impl DataChuncked {
             targets_bv[*class][idx / 64].set(idx % 64, true);
         }
 
-        Ok(DataChuncked { filename, ntransactions, nattributes, nclasses, data: inputs, target: targets_bv })
+        Ok(DataChunked {
+            filename,
+            ntransactions,
+            nattributes,
+            nclasses,
+            data: inputs,
+            target: targets_bv,
+        })
     }
 }

@@ -9,7 +9,6 @@ pub struct TrieEdges {
     pub edges: Vec<TrieNode>,
 }
 
-
 impl TrieEdges {
     pub fn new<'a>() -> TrieEdges {
         TrieEdges { edges: vec![] }
@@ -18,15 +17,20 @@ impl TrieEdges {
 
 impl fmt::Display for TrieEdges {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        writeln!(f, "{{  ");
+        if let Err(e) = writeln!(f, "{{  ") {
+            println!("Writing error: {}", e.to_string());
+        };
         for i in &self.edges {
-            write!(f, "\t{}", i);
+            if let Err(e) = write!(f, "\t{}", i) {
+                println!("Writing error: {}", e.to_string());
+            };
         }
-        write!(f, " }}");
+        if let Err(e) = write!(f, " }}") {
+            println!("Writing error: {}", e.to_string());
+        };
         Ok(())
     }
 }
-
 
 #[derive(Debug)]
 pub struct TrieNode {
@@ -38,28 +42,47 @@ pub struct TrieNode {
 
 impl fmt::Display for TrieNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{{ Item:  ({}, {}),  is_new:  {}  NodeData :  {},  Edges:  {}}}", self.item.0, self.item.1, self.is_new, self.data, self.sub_trie)
+        write!(
+            f,
+            "{{ Item:  ({}, {}),  is_new:  {}  NodeData :  {},  Edges:  {}}}",
+            self.item.0, self.item.1, self.is_new, self.data, self.sub_trie
+        )
     }
 }
-
 
 impl TrieNode {
     pub fn new(item: Item) -> TrieNode {
-        TrieNode { item, sub_trie: TrieEdges::new(), data: Node::new(item.0, 0), is_new: true }
+        TrieNode {
+            item,
+            sub_trie: TrieEdges::new(),
+            data: Node::new(item.0, 0),
+            is_new: true,
+        }
     }
 }
-
 
 pub struct Trie {
     pub root: TrieNode,
     pub cachesize: u64,
+    pub discrepancy: Option<usize>,
+    pub recursion_count: usize,
+    pub max_discrepancy: Option<usize>,
     pub is_done: bool,
+    pub has_timeout: bool,
 }
 
 #[allow(dead_code)]
 impl Trie {
     pub fn new() -> Trie {
-        Trie { root: TrieNode::new((usize::MAX, false)), cachesize: 0, is_done: false }
+        Trie {
+            root: TrieNode::new((usize::MAX, false)),
+            cachesize: 0,
+            discrepancy: None,
+            recursion_count: 0,
+            max_discrepancy: None,
+            is_done: false,
+            has_timeout: false,
+        }
     }
 
     pub fn get(&mut self, key: &Vec<Item>) -> Option<&mut TrieNode> {
@@ -102,6 +125,13 @@ impl Trie {
         let node_ref = node.unwrap();
         node_ref.is_new = false;
         node_ref.data = node_data;
+        true
+    }
+
+    pub fn set_node_exploration_status(&mut self, itemset: &Vec<Item>, status: bool) -> bool {
+        let node = self.get(itemset);
+        let node_ref = node.unwrap();
+        node_ref.data.is_explored = status;
         true
     }
 

@@ -1,24 +1,22 @@
-use bit_vec::BitVec;
-
-use crate::data::dt_chuncked::DataChunked;
+use crate::data::dt_longed::DataLong;
 use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
-use crate::mining::types_def::*;
+use crate::mining::types_def::Item;
 
-pub struct ItemsetOpsChunked<'a> {
+pub struct ItemsetOpsLong<'a> {
     // TODO: Optimization for valids words using valids chuncks and limits variables
     // TODO: Look for options to changes the Vec to &[]. It can be faster
     pub current: Vec<Item>,
-    pub data: &'a DataChunked,
+    pub data: &'a DataLong,
     support: Option<usize>,
     frequency: Option<f32>,
-    mask: Option<Vec<BitVec>>,
-    mask_stack: Vec<Vec<BitVec>>,
+    mask: Option<Vec<u64>>,
+    mask_stack: Vec<Vec<u64>>,
     ntransactions: usize,
     nchunks: usize,
     updated: bool,
 }
 
-impl ItemsetBitvector for ItemsetOpsChunked<'_> {
+impl ItemsetBitvector for ItemsetOpsLong<'_> {
     fn intersection_cover(&mut self, second_its: &Item) -> usize {
         self.current.push(*second_its);
         self.updated = false;
@@ -59,22 +57,12 @@ impl ItemsetBitvector for ItemsetOpsChunked<'_> {
         self.support();
     }
 
-    fn reset(&mut self) {
-        self.gen_new_mask();
-        let cloned_mask = self.mask.as_ref().unwrap().clone();
-        self.mask_stack = vec![cloned_mask];
-        self.support = None;
-        self.frequency = None;
-        self.updated = false;
-        self.current = vec![];
-    }
-
     fn support(&mut self) -> usize {
         return if self.support.is_some() && self.updated {
             self.support.unwrap()
         } else if self.mask.is_some() && self.updated {
             let mask = self.mask.as_ref().unwrap();
-            self.support = Option::from(ItemsetOpsChunked::count_in_vec(mask));
+            self.support = Option::from(ItemsetOpsLong::count_in_vec(mask));
             self.frequency = Option::from(self.support.unwrap() as f32 / self.ntransactions as f32);
             self.updated = true;
             self.support.unwrap()
@@ -91,9 +79,9 @@ impl ItemsetBitvector for ItemsetOpsChunked<'_> {
             for j in 0..self.nchunks {
                 let mask_chunk = &mut cloned_mask[j];
                 let target_chunk = &self.data.target[i][j];
-                mask_chunk.and(target_chunk);
+                *mask_chunk = *mask_chunk & *target_chunk;
             }
-            classes_cover.push(ItemsetOpsChunked::count_in_vec(&cloned_mask));
+            classes_cover.push(ItemsetOpsLong::count_in_vec(&cloned_mask));
         }
         classes_cover
     }
@@ -135,27 +123,38 @@ impl ItemsetBitvector for ItemsetOpsChunked<'_> {
     fn get_nclasses(&self) -> usize {
         self.data.nclasses
     }
+
+    fn reset(&mut self) {
+        self.gen_new_mask();
+        let cloned_mask = self.mask.as_ref().unwrap().clone();
+        self.mask_stack = vec![cloned_mask];
+        self.support = None;
+        self.frequency = None;
+        self.updated = false;
+        self.current = vec![];
+    }
 }
 
 #[allow(dead_code)]
-impl<'a> ItemsetOpsChunked<'a> {
-    // TODO : Implementation of valid words
-    pub fn new(data: &DataChunked) -> ItemsetOpsChunked {
+impl<'a> ItemsetOpsLong<'a> {
+    pub fn new(data: &DataLong) -> ItemsetOpsLong {
         let ntransactions = data.ntransactions;
         let nchunks = data.data[0].len();
-        let mut mask = Option::from(vec![BitVec::from_elem(64, true); nchunks]);
+        let mut mask = Option::from(vec![<u64>::MAX; nchunks]);
         let dead_bits = 64
             - match ntransactions % 64 {
                 0 => 0,
                 _ => nchunks * 64 - ntransactions,
             };
-        let last_chunk = &mut mask.as_mut().unwrap()[nchunks - 1];
+
+        let first_chunk = &mut mask.as_mut().unwrap()[0];
         for i in (dead_bits..64).rev() {
-            last_chunk.set(i, false);
+            let int_mask = 1u64 << i;
+            *first_chunk = *first_chunk & !int_mask;
         }
         let cloned_mask = mask.as_ref().unwrap().clone();
 
-        ItemsetOpsChunked {
+        ItemsetOpsLong {
             current: vec![],
             data,
             support: None,
@@ -176,10 +175,9 @@ impl<'a> ItemsetOpsChunked<'a> {
             let a = &mut mask[i];
             let b = &mut item_vec[i];
             if !item.1 {
-                b.negate();
-                a.and(b);
+                *a = *a & !*b;
             } else {
-                a.and(b);
+                *a = *a & *b;
             }
         }
 
@@ -187,16 +185,23 @@ impl<'a> ItemsetOpsChunked<'a> {
     }
 
     fn gen_new_mask(&mut self) {
-        self.mask = Option::from(vec![BitVec::from_elem(64, true); self.nchunks]);
+        self.mask = self.gen_not_self_mask();
+    }
+
+    fn gen_not_self_mask(&self) -> Option<Vec<u64>> {
+        let mut mask = Option::from(vec![<u64>::MAX; self.nchunks]);
         let dead_bits = 64
             - match self.ntransactions % 64 {
                 0 => 0,
                 _ => self.nchunks * 64 - self.ntransactions,
             };
-        let last_chunk = &mut self.mask.as_mut().unwrap()[self.nchunks - 1];
+
+        let first_chunk = &mut mask.as_mut().unwrap()[0];
         for i in (dead_bits..64).rev() {
-            last_chunk.set(i, false);
+            let int_mask = 1u64 << i;
+            *first_chunk = *first_chunk & !int_mask;
         }
+        mask
     }
 
     fn compute_support_from_mask(&mut self) -> usize {
@@ -208,15 +213,15 @@ impl<'a> ItemsetOpsChunked<'a> {
             self.update_mask(item);
         }
         let mask = self.mask.as_mut().unwrap();
-        self.support = Option::from(ItemsetOpsChunked::count_in_vec(mask));
+        self.support = Option::from(ItemsetOpsLong::count_in_vec(mask));
         self.frequency = Option::from(self.support.unwrap() as f32 / self.ntransactions as f32);
         self.updated = true;
         self.support.unwrap()
     }
 
-    fn count_in_vec(arr: &Vec<BitVec>) -> usize {
+    fn count_in_vec(arr: &Vec<u64>) -> usize {
         arr.iter()
-            .map(|bv| bv.iter().filter(|x| *x).count())
+            .map(|bv| bv.count_ones() as usize)
             .collect::<Vec<usize>>()
             .iter()
             .sum()

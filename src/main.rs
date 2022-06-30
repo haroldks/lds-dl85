@@ -1,74 +1,129 @@
-use mining::types_def::*;
+use crate::cli::Cli;
+use clap::Parser;
+use std::error::Error;
+use std::fs::File;
+use std::io::BufReader;
+use std::process;
 
 use crate::cache::trie::*;
-use crate::data::dt_chuncked::*;
+use crate::data::dt_longed::DataLong;
 use crate::dl85::basic_dl85::DL85;
-use crate::mining::its_ops_chunked::ItemsetOpsChunked;
-use crate::tree::Tree;
+use crate::mining::itemset_bitvector_trait::ItemsetBitvector;
+use crate::mining::its_ops_long::ItemsetOpsLong;
+use crate::solution::export::Export;
+use crate::solution::solution::{
+    accuracy, confusion_matrix, get_data_as_transactions_and_target, get_solution_tree, predict,
+};
 
-mod mining;
-
-mod data;
 mod cache;
-mod node;
+mod cli;
+mod data;
 mod dl85;
-mod tree;
+mod experiments;
+mod mining;
+mod node;
+mod solution;
 
+fn run_from_conf(cli: Cli) -> Result<(), Box<dyn Error>> {
+    let filename = cli.input.unwrap().clone();
+    let dataset = DataLong::new(filename.clone())?;
+    let operator = ItemsetOpsLong::new(&dataset);
+    let cache = Trie::new();
+    let mut model = DL85::new(operator.get_infos());
+    println!("--------------------- Run start ---------------------  \n");
+    let output = model.run(
+        cli.support.unwrap(),
+        cli.depth.unwrap(),
+        cli.error,
+        cli.timeout,
+        cli.log_error_time,
+        cli.use_information_gain,
+        cli.allow_discrepancy,
+        cli.discrepancy_limit,
+        cli.recursion_limit,
+        false,
+        operator,
+        cache,
+    );
+    println!("--------------------- Run over. --------------------- \n");
 
-fn main() { // TODO: Unit tests
+    println!("\n--------------------- Metrics ---------------------");
 
-    let datac = DataChuncked::new("datasets/heart-cleveland.txt".to_string()).unwrap();
-    let its_opsd = ItemsetOpsChunked::new(&datac, None, None, datac.ntransactions, false, datac.data[0].len());
-    let mut algo = DL85::new(10, 3, 200., 1000., Trie::new(), its_opsd);
-    let output = algo.run();
-    let data = get_solution_tree(output.0);
-    println!("{:?}", data.0);
+    let mut result = Export::new();
+
+    let basename = filename.clone();
+    let mut basename = *basename.split('/').collect::<Vec<&str>>().last().unwrap();
+    let len = basename.len();
+    basename = &basename[0..len - 4];
+
+    result.dataset = basename.to_string();
+    result.nb_features = output.1.data.nattributes;
+    result.support = cli.support.unwrap();
+    result.max_depth = cli.depth.unwrap();
+    result.timeout = cli.timeout;
+
+    if cli.allow_discrepancy {
+        result.allow_discrepancy = true;
+        result.discrepancy = output.0.discrepancy;
+        result.max_discrepancy = output.0.max_discrepancy;
+    }
+    if cli.use_information_gain {
+        result.use_information_gain = true;
+    }
+
+    result.cache_size = output.0.cachesize;
+    result.recursion_count = output.0.recursion_count;
+    result.error = output.0.root.data.node_error;
+    result.has_timeout = output.0.has_timeout;
+    result.duration = output.4;
+    println!("Cache Size : {:?} Nodes", output.0.cachesize);
+    println!("Tree Error : {:?} ", output.0.root.data.node_error);
+
+    let solution_tuple = get_solution_tree(output.0);
+    let metrics = get_data_as_transactions_and_target(filename.clone()).unwrap();
+    let y_pred = predict(metrics.0.clone(), solution_tuple.0.clone());
+    let accuracy = accuracy(metrics.1.clone(), y_pred.clone());
+    result.accuracy = accuracy;
+
+    println!("Accuracy: {:?}", accuracy);
+    println!(
+        "Confusion Matrix: {:?}",
+        confusion_matrix(metrics.1, y_pred, 2)
+    );
+
+    println!("\n--------------------- Tree ---------------------");
+    println!("Depth: {:?}", solution_tuple.2);
+    println!("Tree: {:?}", solution_tuple.0);
+
+    result.tree_depth = solution_tuple.2;
+    result.tree = solution_tuple.0;
+
+    if let Some(output) = cli.output {
+        println!("Output path was given. Saving results to: {}.", output);
+        if let Err(e) = result.to_json(output) {
+            println!("Error while creating the tree json file : {}", e);
+        }
+    }
+
+    Ok(())
 }
 
-fn get_solution_tree(cache: Trie) -> (Tree, Trie) {
-    if !cache.is_done || cache.root.data.test == <usize>::MAX {
-        (Tree::new(<usize>::MAX), cache)
-    } else {
-        let best_attribute = cache.root.data.test;
-        let mut tree = Tree::new(best_attribute);
-        let branches = vec![vec![(best_attribute, false)], vec![(best_attribute, true)]];
+fn main() -> Result<(), Box<dyn Error>> {
+    let mut cli = Cli::parse();
 
-        let data = get_sub_tree(branches[0].clone(), cache);
-        tree.left.push(data.1);
-
-        let data = get_sub_tree(branches[1].clone(), data.0);
-        tree.right.push(data.1);
-
-        (tree, data.0)
+    if let Some(config_path) = cli.config.as_deref() {
+        let file = File::open(config_path)?;
+        let reader = BufReader::new(file);
+        cli = serde_json::from_reader(reader)?;
     }
-}
 
-fn get_sub_tree(parent: Vec<Item>, mut cache: Trie) -> (Trie, Tree) {
-    let parent_node = cache.get(&parent).unwrap();
-    let len = parent.len();
-
-    let parent_attribute = parent[len - 1].0;
-    let parent_node_data = parent_node.data;
-    let mut final_tree = Tree::new(parent_node_data.test);
-    if parent_attribute == parent_node_data.test || parent_node_data.is_leaf {
-        final_tree.is_leaf = true;
-        final_tree.max_class = parent_node_data.max_class;
-        final_tree.error = Option::from(parent_node_data.node_error);
-        (cache, final_tree)
-    } else {
-        let mut item_set_vec = parent.clone();
-        item_set_vec.push((parent_node_data.test, false)); //left
-        item_set_vec.sort_unstable();
-
-        let data = get_sub_tree(item_set_vec, cache);
-        final_tree.left.push(data.1);
-
-        let mut item_set_vec = parent.clone();
-        item_set_vec.push((parent_node_data.test, true)); //right
-        item_set_vec.sort_unstable();
-
-        let data = get_sub_tree(item_set_vec, data.0);
-        final_tree.right.push(data.1);
-        (data.0, final_tree)
+    if cli.input.is_none() || cli.support.is_none() || cli.depth.is_none() {
+        println!("Missing parameters");
+        process::exit(1);
     }
+
+    if let Err(e) = run_from_conf(cli) {
+        println!("Error {}, while running from the configuration", e);
+    };
+    Ok(())
 }
